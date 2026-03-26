@@ -14,15 +14,21 @@ try {
   ffmpegBinaryPath = null;
 }
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const app = express();
 
-const dataDir = path.join(__dirname, "data");
+const APP_STORAGE_DIR = process.env.APP_STORAGE_DIR
+  ? path.resolve(process.env.APP_STORAGE_DIR)
+  : __dirname;
+const STATIC_BASE_PATH = "/bright";
+const MAINPAGE_ENTRY_PATH = `${STATIC_BASE_PATH}/mainpage/mainpage.html`;
+
+const dataDir = path.join(APP_STORAGE_DIR, "data");
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const mediaRootDir = path.join(__dirname, "media");
+const mediaRootDir = path.join(APP_STORAGE_DIR, "media");
 const mediaUploadDir = path.join(mediaRootDir, "uploads");
 const mediaConvertedDir = path.join(mediaRootDir, "converted");
 if (!fs.existsSync(mediaUploadDir)) {
@@ -258,6 +264,19 @@ function isLikelyAudioExtension(extension) {
 app.use(cors());
 app.use(express.json());
 app.use("/media", express.static(mediaRootDir));
+app.use(STATIC_BASE_PATH, express.static(__dirname));
+
+app.get("/", (req, res) => {
+  res.redirect(MAINPAGE_ENTRY_PATH);
+});
+
+app.get(STATIC_BASE_PATH, (req, res) => {
+  res.redirect(MAINPAGE_ENTRY_PATH);
+});
+
+app.get(`${STATIC_BASE_PATH}/`, (req, res) => {
+  res.redirect(MAINPAGE_ENTRY_PATH);
+});
 
 const uploadStorage = multer.diskStorage({
   destination(req, file, callback) {
@@ -1156,7 +1175,7 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Auth server running on http://127.0.0.1:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Auth server running on http://0.0.0.0:${PORT}`);
   console.log(`SQLite database: ${dbPath}`);
 });

@@ -43,11 +43,26 @@ const MAX_REPLY_LENGTH = 220;
 const COMMENT_PREVIEW_LIMIT = 2;
 const COMMENTS_TOTAL_LABEL_ID = "comments-total-label";
 const currentHost = window.location.hostname || "127.0.0.1";
-const API_BASE_CANDIDATES = [
+const currentProtocol = String(window.location.protocol || "").toLowerCase();
+const currentPort = String(window.location.port || "");
+const currentOriginApiBase =
+  ["http:", "https:"].includes(currentProtocol) && window.location.origin
+    ? `${window.location.origin}/api`
+    : "";
+const localApiBases = [
   `http://${currentHost}:3000/api`,
   "http://127.0.0.1:3000/api",
   "http://localhost:3000/api",
-].filter((value, index, array) => array.indexOf(value) === index);
+];
+const preferLocalApi =
+  ["127.0.0.1", "localhost"].includes(String(currentHost).toLowerCase()) &&
+  currentPort &&
+  currentPort !== "3000";
+const API_BASE_CANDIDATES = (preferLocalApi
+  ? [...localApiBases, currentOriginApiBase]
+  : [currentOriginApiBase, ...localApiBases]
+).filter((value, index, array) => value && array.indexOf(value) === index);
+let activeApiBase = API_BASE_CANDIDATES[0];
 const COMMENT_REACTION_EMOJIS = [
   "\u{1F44D}",
   "\u{2764}\u{FE0F}",
@@ -613,7 +628,7 @@ function buildMediaDownloadUrl(format) {
     format,
     title: slugifyName(sourceTitle),
   });
-  return `${API_BASE_CANDIDATES[0]}/media/download?${params.toString()}`;
+  return `${activeApiBase}/media/download?${params.toString()}`;
 }
 
 function updateDownloadOptionAvailability() {
