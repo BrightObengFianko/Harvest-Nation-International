@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harvest Nations | Sign Up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div id="bgSlider" aria-hidden="true">
+    <div class="bg-layer"></div>
+    <div class="bg-layer"></div>
+  </div>
+
+  <main class="auth-shell">
+    <a class="back-home" id="auth-main-link" href="/bright/mainpage/mainpage.html">
+      <i class="fa-solid fa-arrow-left"></i>
+      <span class="back-home-label">Back to Main Page</span>
+    </a>
+
+    <section class="card auth-card">
+      <div class="logo">
+        <img src="churchlogo.jpeg" alt="Harvest Nations logo" class="logo-mark">
+      </div>
+
+      <p class="org-name">HARVEST NATIONS</p>
+      <h1>International (HNI)</h1>
+      <div id="errorMsg" class="error"></div>
+
+      <form id="signupForm" novalidate>
+        <input type="text" id="fullname" placeholder="Full Name">
+        <input type="email" id="signupEmail" placeholder="Email Address">
+        <input type="password" id="signupPassword" placeholder="Password">
+        <input type="password" id="confirmPassword" placeholder="Confirm Password">
+        <button type="button" id="signup-submit-btn">Create Account</button>
+      </form>
+
+      <div class="links">
+        Already have an account?
+        <a href="/bright/login.html">Log In</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="main.js?v=20260325-authfix"></script>
+  <script src="bgSlider.js?v=20260325-authfix"></script>
+</body>
+</html>

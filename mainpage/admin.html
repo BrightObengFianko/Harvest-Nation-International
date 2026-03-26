@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HNI Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="admin-auth-gate show" id="admin-auth-gate" aria-hidden="false">
+    <div class="admin-auth-card" role="dialog" aria-modal="true" aria-labelledby="admin-auth-title">
+      <p class="kicker">Restricted Access</p>
+      <h2 id="admin-auth-title">Admin Login Required</h2>
+      <p class="admin-auth-copy">Sign in with an admin account to open the dashboard.</p>
+      <form id="admin-login-form" class="admin-auth-form">
+        <label for="admin-email-input">Email</label>
+        <input id="admin-email-input" type="email" autocomplete="username" placeholder="admin@email.com" required>
+        <label for="admin-password-input">Password</label>
+        <input id="admin-password-input" type="password" autocomplete="current-password" placeholder="Password" required>
+        <p class="admin-auth-message" id="admin-auth-message" aria-live="polite"></p>
+        <div class="admin-auth-actions">
+          <a class="btn btn-light" href="mainpage.html">Cancel</a>
+          <button class="btn btn-solid" id="admin-login-btn" type="submit">Login</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <img src="churchlogo.jpeg" alt="HNI Logo">
+      <div>
+        <p class="kicker">Admin Panel</p>
+        <h1>Harvest Nation Dashboard</h1>
+      </div>
+    </div>
+    <a class="back-btn" href="mainpage.html">
+      <i class="fa-solid fa-arrow-left"></i>
+      Back To Main Page
+    </a>
+  </header>
+
+  <main class="dashboard">
+    <section class="card">
+      <div class="card-head">
+        <h2>Login Stats</h2>
+        <button class="btn btn-light" id="refresh-stats-btn">Refresh</button>
+      </div>
+      <div class="stats-grid">
+        <article class="stat-box">
+          <p class="label">Registered Users</p>
+          <p class="value" id="stat-users">0</p>
+        </article>
+        <article class="stat-box">
+          <p class="label">Number Of Admins</p>
+          <p class="value" id="stat-admins">0</p>
+        </article>
+        <article class="stat-box">
+          <p class="label">Number Of Users</p>
+          <p class="value" id="stat-unique-logins">0</p>
+        </article>
+      </div>
+      <p class="helper">Server endpoints: <code>/api/stats/logins</code> and <code>/api/admin/users</code></p>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>User & Login Management</h2>
+        <button class="btn btn-danger-light" id="clear-all-logins-btn">Delete All Login History</button>
+      </div>
+      <div class="user-tools">
+        <div class="user-search">
+          <input type="text" id="user-search-input" list="user-search-suggestions" placeholder="Search by name, email, or source">
+          <datalist id="user-search-suggestions"></datalist>
+          <button class="btn btn-light" id="user-search-btn" type="button">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            Search
+          </button>
+        </div>
+        <p class="helper">Showing 5 records per page. Search will show all matching user details.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Source</th>
+              <th>Role</th>
+              <th>Total Logins</th>
+              <th>Last Login</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body"></tbody>
+        </table>
+      </div>
+      <div class="video-pager user-pager">
+        <button class="btn btn-light" id="users-prev-btn">Prev</button>
+        <p class="page-indicator" id="users-page-indicator">Page 1 / 1</p>
+        <button class="btn btn-light" id="users-next-btn">Next</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Admin Role Management</h2>
+      </div>
+      <p class="helper">Showing only users who currently have admin access.</p>
+      <div class="table-wrap">
+        <table class="admin-role-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Source</th>
+              <th>Current Role</th>
+              <th>Change Role</th>
+            </tr>
+          </thead>
+          <tbody id="admin-role-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Weekly Content</h2>
+        <button class="btn btn-light" id="reload-weekly-content-btn" type="button">Reload</button>
+      </div>
+
+      <form id="weekly-content-form" class="weekly-form">
+        <div class="weekly-grid">
+          <div class="weekly-field">
+            <label for="weekly-theme-title-input">Theme Title</label>
+            <input id="weekly-theme-title-input" type="text" maxlength="80" placeholder="This Week's Theme">
+          </div>
+          <div class="weekly-field weekly-field-wide">
+            <label for="weekly-theme-message-input">Theme Message</label>
+            <textarea id="weekly-theme-message-input" maxlength="240" placeholder="Write this week's theme message..."></textarea>
+          </div>
+        </div>
+        <p class="helper">Theme message will also appear in the quotation slot on main page.</p>
+
+        <div class="weekly-actions">
+          <button class="btn btn-solid" id="save-weekly-content-btn" type="submit">Save Weekly Content</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Video Section</h2>
+      </div>
+
+      <form id="video-form" class="video-form">
+        <input type="text" id="video-title-input" placeholder="Video title (optional)">
+        <select id="video-source-type-input" aria-label="Video source type">
+          <option value="embed">Embed Video Link</option>
+          <option value="upload">Upload Video File</option>
+        </select>
+        <input type="url" id="video-url-input" placeholder="Video URL (YouTube embed or watch link)">
+        <input type="file" id="video-file-input" accept="video/*" hidden>
+        <button class="btn btn-solid" type="submit">Add Video</button>
+      </form>
+      <p class="helper" id="video-source-helper">Use an embed link or switch to upload a video from your laptop.</p>
+
+      <ul class="moderation-list" id="video-list"></ul>
+
+      <div class="video-pager video-pager-bottom">
+        <button class="btn btn-light" id="videos-prev-btn">Prev</button>
+        <p class="page-indicator" id="videos-page-indicator">Page 1 / 1</p>
+        <button class="btn btn-light" id="videos-next-btn">Next</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="confirm-modal" id="admin-confirm-modal" aria-hidden="true">
+    <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-confirm-title">
+      <h3 id="admin-confirm-title">Confirm Admin Role Change</h3>
+      <p id="admin-confirm-message">Do you want to update this user's admin role?</p>
+      <div class="confirm-actions">
+        <button class="btn btn-light" id="admin-confirm-no" type="button">No</button>
+        <button class="btn btn-admin-add" id="admin-confirm-yes" type="button">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-float-wrap">
+    <a class="chat-float" href="chat.html" title="Chat" aria-label="Open chat">
+      <i class="fa-solid fa-comments"></i>
+    </a>
+    <span class="chat-float-label">Chat</span>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

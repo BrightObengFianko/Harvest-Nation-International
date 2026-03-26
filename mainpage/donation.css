@@ -1,0 +1,237 @@
+.donation-page-body {
+  background:
+    radial-gradient(circle at top right, rgba(105, 205, 234, 0.14), transparent 30%),
+    #eef5fd;
+}
+
+.donation-hero {
+  background:
+    linear-gradient(100deg, rgba(5, 11, 22, 0.86), rgba(92, 65, 247, 0.72)),
+    url("img1.webp") center/cover no-repeat;
+  min-height: 280px;
+}
+
+.site-nav a[aria-current="page"]::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.donation-shell {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.donation-intro-card,
+.donation-note-card {
+  background: var(--surface-1);
+  border: 1px solid rgba(26, 53, 83, 0.08);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+.donation-kicker {
+  color: #5c41f7;
+  font-family: "Oswald", sans-serif;
+  font-size: 0.88rem;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.donation-intro-card h2,
+.donation-note-card h3 {
+  color: var(--ink-900);
+  font-family: "Oswald", sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.donation-intro-card h2 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  margin-top: 8px;
+}
+
+.donation-intro-card p:last-child,
+.donation-note-card p {
+  color: #46607f;
+  font-size: 1rem;
+  margin-top: 10px;
+  max-width: 760px;
+}
+
+.donation-methods {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.donation-card {
+  background: var(--surface-1);
+  border: 1px solid rgba(26, 53, 83, 0.08);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+.donation-card-primary {
+  background:
+    linear-gradient(135deg, rgba(9, 19, 39, 0.98), rgba(92, 65, 247, 0.92)),
+    radial-gradient(circle at top right, rgba(105, 205, 234, 0.3), transparent 40%);
+  border-color: rgba(105, 205, 234, 0.2);
+  color: #ffffff;
+}
+
+.donation-card-head {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.donation-icon {
+  align-items: center;
+  background: rgba(92, 65, 247, 0.12);
+  border: 1px solid rgba(92, 65, 247, 0.16);
+  border-radius: 16px;
+  color: #5c41f7;
+  display: inline-flex;
+  font-size: 1.2rem;
+  height: 52px;
+  justify-content: center;
+  width: 52px;
+}
+
+.donation-card-primary .donation-icon {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.donation-icon-bank {
+  color: #263f76;
+}
+
+.donation-label {
+  color: #587092;
+  font-family: "Oswald", sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.donation-card-primary .donation-label {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.donation-card h3 {
+  color: var(--ink-900);
+  font-family: "Oswald", sans-serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.03em;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+.donation-card-primary h3 {
+  color: #ffffff;
+}
+
+.donation-number-box {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 20px;
+  margin-top: 18px;
+  padding: 18px;
+}
+
+.donation-number-label {
+  color: rgba(255, 255, 255, 0.8);
+  display: block;
+  font-size: 0.92rem;
+}
+
+.donation-number {
+  display: block;
+  font-family: "Oswald", sans-serif;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-top: 8px;
+}
+
+.donation-copy {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  margin-top: 16px;
+}
+
+.donation-copy-soft {
+  color: #49627f;
+}
+
+.donation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.donation-copy-btn {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.donation-bank-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.donation-bank-row {
+  align-items: start;
+  background: #eff6ff;
+  border: 1px solid #d8e4f2;
+  border-radius: 16px;
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.donation-bank-row span {
+  color: #607696;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.donation-bank-row strong {
+  color: var(--ink-900);
+  font-size: 1rem;
+}
+
+@media (max-width: 860px) {
+  .donation-methods {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .donation-intro-card,
+  .donation-note-card,
+  .donation-card {
+    padding: 18px;
+  }
+
+  .donation-actions {
+    flex-direction: column;
+  }
+
+  .donation-actions .btn {
+    justify-content: center;
+    width: 100%;
+  }
+}

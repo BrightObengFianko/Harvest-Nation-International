@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harvest Nation International Church</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="mainpage.css">
+  <link rel="stylesheet" href="lessons.css">
+</head>
+<body class="lessons-page-body">
+  <header class="navbar" id="site-header">
+    <a class="brand" href="mainpage.html" aria-label="Harvest Nation International home">
+      <img src="churchlogo.jpeg" alt="Harvest Nation International logo" class="brand-logo">
+      <span class="brand-text">Harvest Nation <span>International</span></span>
+    </a>
+
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+      <a href="mainpage.html">MAIN</a>
+      <a href="mainpage.html#weekly-theme-section">ABOUT</a>
+      <a href="lessons.html" aria-current="page">LESSONS</a>
+      <a href="donation.html">DONATE</a>
+      <a href="admin.html" data-admin-link="true" hidden>Admin</a>
+    </nav>
+
+    <div class="auth lessons-auth">
+      <div class="auth-links" id="auth-links">
+        <a href="/bright/login.html" class="btn btn-light">Sign In</a>
+        <a href="/bright/signup.html" class="btn btn-solid">Sign Up</a>
+      </div>
+
+      <div class="notification-shell" id="notification-shell" hidden>
+        <button type="button" class="notification-toggle" id="notification-toggle" aria-haspopup="true" aria-expanded="false" aria-label="Open chat notifications">
+          <i class="fa-regular fa-bell notification-toggle-icon" id="notification-toggle-icon" aria-hidden="true"></i>
+          <span class="notification-badge" id="notification-badge" hidden>0</span>
+        </button>
+
+        <div class="notification-menu" id="notification-menu" hidden>
+          <div class="notification-menu-head">
+            <p>Chat Notifications</p>
+          </div>
+          <ul class="notification-list" id="notification-list"></ul>
+          <p class="notification-empty" id="notification-empty">No chat notifications yet.</p>
+        </div>
+      </div>
+
+      <div class="account-shell" id="account-shell" hidden>
+        <button type="button" class="btn btn-light account-toggle" id="account-toggle" aria-haspopup="true" aria-expanded="false">
+          <img class="account-toggle-image" id="account-toggle-image" alt="Account profile image" hidden>
+          <i class="fa-regular fa-user account-toggle-icon" id="account-toggle-icon" aria-hidden="true"></i>
+        </button>
+        <span class="account-toggle-label">Account</span>
+
+        <div class="account-menu" id="account-menu" hidden>
+          <div class="account-signout-wrap">
+            <button type="button" class="account-signout-btn" id="account-signout-btn" aria-label="Sign out">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+            <span class="account-signout-label">Log Out</span>
+          </div>
+
+          <div class="account-menu-card">
+            <div class="account-avatar-wrap">
+              <button type="button" class="account-avatar account-avatar-btn" id="account-avatar-btn" aria-label="Upload profile image">
+                <img class="account-avatar-image" id="account-avatar-image" alt="Account profile image" hidden>
+                <i class="fa-regular fa-user account-avatar-icon" id="account-avatar-icon" aria-hidden="true"></i>
+              </button>
+              <input type="file" id="account-avatar-input" class="account-avatar-input" accept="image/*" hidden>
+              <button type="button" class="account-photo-btn" id="account-photo-btn">Upload photo</button>
+            </div>
+
+            <div class="account-details">
+              <p class="account-label">Account</p>
+              <p class="account-name" id="account-name">Member</p>
+              <p class="account-email" id="account-email">member@example.com</p>
+            </div>
+          </div>
+
+          <div class="account-confirm" id="account-logout-confirm" hidden>
+            <p class="account-confirm-text">Do you want to log out?</p>
+            <div class="account-confirm-actions">
+              <button type="button" class="btn btn-light account-confirm-no" id="account-logout-no">No</button>
+              <button type="button" class="btn btn-solid account-confirm-yes" id="account-logout-yes">Yes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <section class="hero lessons-hero reveal delay-0">
+      <div class="hero-overlay">
+        <p class="eyebrow">Lessons Library</p>
+        <h1>Grow In Faith Through Every Teaching</h1>
+        <p class="hero-copy">
+          Watch current and previous lessons with their weekly theme and message.
+        </p>
+      </div>
+    </section>
+
+
+    <section class="lessons-board reveal delay-2" id="lessons-section">
+      <header class="lessons-head">
+        <h2>Lessons</h2>
+        <a
+          class="lessons-more-link lessons-head-drive-link"
+          href="https://drive.google.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          More Lessons On Google Drive
+        </a>
+      </header>
+
+      <div class="lessons-videos-block">
+        <div class="lessons-videos-head">
+          <h3>Posted Videos</h3>
+          <div class="lessons-video-search">
+            <label class="sr-only" for="lessons-video-search-input">Search posted videos</label>
+            <input
+              type="text"
+              id="lessons-video-search-input"
+              class="lessons-video-search-input"
+              list="lessons-video-search-suggestions"
+              placeholder="Search theme or date"
+            >
+            <datalist id="lessons-video-search-suggestions"></datalist>
+            <button type="button" id="lessons-video-search-btn" class="lessons-video-search-btn">
+              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <span>Search</span>
+            </button>
+          </div>
+        </div>
+        <ul id="lessons-video-list" class="lessons-video-list"></ul>
+        <div class="lessons-video-actions">
+          <button type="button" id="lessons-video-toggle" class="lessons-video-toggle" hidden>
+            <i class="fa-solid fa-angle-down" aria-hidden="true"></i>
+            <span>View More</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="lesson-viewer-modal" class="lesson-viewer-modal" hidden>
+    <div class="lesson-viewer-backdrop" data-close-lesson-viewer></div>
+    <section class="lesson-viewer-dialog" role="dialog" aria-modal="true" aria-labelledby="weekly-theme-title">
+      <button
+        type="button"
+        class="lesson-viewer-close"
+        id="lesson-viewer-close-btn"
+        data-close-lesson-viewer
+        aria-label="Close lesson viewer"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="lesson-viewer-grid">
+        <aside class="lesson-viewer-comments-column">
+          <section class="recent lesson-viewer-comments">
+            <div class="lesson-viewer-comments-head">
+              <h3>Comments</h3>
+            </div>
+            <ul id="lesson-comments-list" class="lesson-comments-list"></ul>
+          </section>
+        </aside>
+
+        <div class="lesson-viewer-main">
+          <section class="focus-box lesson-viewer-theme-box" id="weekly-theme-section">
+            <p id="weekly-theme-subtitle" class="lesson-viewer-theme-kicker">Theme</p>
+            <h2 id="weekly-theme-title">This Week's Theme</h2>
+            <ul id="weekly-quotations-list"></ul>
+          </section>
+
+          <article class="video-card lesson-viewer-card">
+            <div class="video-wrapper lesson-viewer-player-wrap">
+              <div id="video-player-slot"></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="chat-float-wrap">
+    <a class="chat-float" href="chat.html" title="Chat" aria-label="Open chat">
+      <i class="fa-solid fa-comments"></i>
+    </a>
+    <span class="chat-float-label">Chat</span>
+  </div>
+
+  <script src="lessons.js"></script>
+  <script src="account-menu.js"></script>
+  <script src="nav-notifications.js"></script>
+</body>
+</html>

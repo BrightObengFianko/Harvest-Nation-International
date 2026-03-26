@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HNI Donate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="mainpage.css">
+  <link rel="stylesheet" href="donation.css">
+</head>
+<body class="donation-page-body">
+  <header class="navbar" id="site-header">
+    <a class="brand" href="mainpage.html" aria-label="Harvest Nation International home">
+      <img src="churchlogo.jpeg" alt="Harvest Nation International logo" class="brand-logo">
+      <span class="brand-text">Harvest Nation <span>International</span></span>
+    </a>
+
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+      <a href="mainpage.html">MAIN</a>
+      <a href="mainpage.html#weekly-theme-section">ABOUT</a>
+      <a href="lessons.html">LESSONS</a>
+      <a href="donation.html" aria-current="page">DONATE</a>
+      <a href="admin.html" data-admin-link="true" hidden>Admin</a>
+    </nav>
+
+    <div class="auth">
+      <div class="auth-links" id="auth-links">
+        <a href="/bright/login.html" class="btn btn-light">Sign In</a>
+        <a href="/bright/signup.html" class="btn btn-solid">Sign Up</a>
+      </div>
+
+      <div class="notification-shell" id="notification-shell" hidden>
+        <button type="button" class="notification-toggle" id="notification-toggle" aria-haspopup="true" aria-expanded="false" aria-label="Open chat notifications">
+          <i class="fa-regular fa-bell notification-toggle-icon" id="notification-toggle-icon" aria-hidden="true"></i>
+          <span class="notification-badge" id="notification-badge" hidden>0</span>
+        </button>
+
+        <div class="notification-menu" id="notification-menu" hidden>
+          <div class="notification-menu-head">
+            <p>Chat Notifications</p>
+          </div>
+          <ul class="notification-list" id="notification-list"></ul>
+          <p class="notification-empty" id="notification-empty">No chat notifications yet.</p>
+        </div>
+      </div>
+
+      <div class="account-shell" id="account-shell" hidden>
+        <button type="button" class="btn btn-light account-toggle" id="account-toggle" aria-haspopup="true" aria-expanded="false">
+          <img class="account-toggle-image" id="account-toggle-image" alt="Account profile image" hidden>
+          <i class="fa-regular fa-user account-toggle-icon" id="account-toggle-icon" aria-hidden="true"></i>
+        </button>
+        <span class="account-toggle-label">Account</span>
+
+        <div class="account-menu" id="account-menu" hidden>
+          <div class="account-signout-wrap">
+            <button type="button" class="account-signout-btn" id="account-signout-btn" aria-label="Sign out">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+            <span class="account-signout-label">Log Out</span>
+          </div>
+
+          <div class="account-menu-card">
+            <div class="account-avatar-wrap">
+              <button type="button" class="account-avatar account-avatar-btn" id="account-avatar-btn" aria-label="Upload profile image">
+                <img class="account-avatar-image" id="account-avatar-image" alt="Account profile image" hidden>
+                <i class="fa-regular fa-user account-avatar-icon" id="account-avatar-icon" aria-hidden="true"></i>
+              </button>
+              <input type="file" id="account-avatar-input" class="account-avatar-input" accept="image/*" hidden>
+              <button type="button" class="account-photo-btn" id="account-photo-btn">Upload photo</button>
+            </div>
+
+            <div class="account-details">
+              <p class="account-label">Account</p>
+              <p class="account-name" id="account-name">Member</p>
+              <p class="account-email" id="account-email">member@example.com</p>
+            </div>
+          </div>
+
+          <div class="account-confirm" id="account-logout-confirm" hidden>
+            <p class="account-confirm-text">Do you want to log out?</p>
+            <div class="account-confirm-actions">
+              <button type="button" class="btn btn-light account-confirm-no" id="account-logout-no">No</button>
+              <button type="button" class="btn btn-solid account-confirm-yes" id="account-logout-yes">Yes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <section class="hero donation-hero">
+      <div class="hero-overlay">
+        <p class="eyebrow">Give With Joy</p>
+        <h1>Support The Work Of Harvest Nation International</h1>
+        <p class="hero-copy">
+          Thank you for giving. You can support the ministry through Ghana mobile money or bank transfer.
+        </p>
+      </div>
+    </section>
+
+    <section class="donation-shell">
+      <article class="donation-intro-card">
+        <p class="donation-kicker">Simple Giving</p>
+        <h2>Choose A Payment Method</h2>
+        <p>
+          Use the option that is easiest for you. If you are sending through mobile money, use the number below.
+        </p>
+      </article>
+
+      <div class="donation-methods">
+        <article class="donation-card donation-card-primary">
+          <div class="donation-card-head">
+            <span class="donation-icon">
+              <i class="fa-solid fa-mobile-screen-button"></i>
+            </span>
+            <div>
+              <p class="donation-label">Ghana Mobile Money</p>
+              <h3>Mobile Money Payment</h3>
+            </div>
+          </div>
+
+          <div class="donation-number-box">
+            <span class="donation-number-label">Mobile Money Number</span>
+            <strong class="donation-number">0247908342</strong>
+          </div>
+
+          <p class="donation-copy">
+            Send your offering, tithe, or seed using your preferred Ghana mobile money network.
+          </p>
+
+          <div class="donation-actions">
+            <button type="button" class="btn btn-solid donation-copy-btn" data-copy="0247908342">
+              <i class="fa-solid fa-copy"></i>
+              Copy Number
+            </button>
+            <a href="tel:0247908342" class="btn btn-light">
+              <i class="fa-solid fa-phone"></i>
+              Call To Confirm
+            </a>
+          </div>
+        </article>
+
+        <article class="donation-card">
+          <div class="donation-card-head">
+            <span class="donation-icon donation-icon-bank">
+              <i class="fa-solid fa-building-columns"></i>
+            </span>
+            <div>
+              <p class="donation-label">Bank Account</p>
+              <h3>Bank Transfer</h3>
+            </div>
+          </div>
+
+          <div class="donation-bank-list">
+            <div class="donation-bank-row">
+              <span>Bank Name</span>
+              <strong>Add official bank name</strong>
+            </div>
+            <div class="donation-bank-row">
+              <span>Account Name</span>
+              <strong>Add official account name</strong>
+            </div>
+            <div class="donation-bank-row">
+              <span>Account Number</span>
+              <strong>Add official account number</strong>
+            </div>
+            <div class="donation-bank-row">
+              <span>Branch</span>
+              <strong>Add branch name</strong>
+            </div>
+          </div>
+
+          <p class="donation-copy donation-copy-soft">
+            Update this section with your verified church bank details when you are ready.
+          </p>
+        </article>
+      </div>
+
+      <article class="donation-note-card">
+        <h3>Giving Note</h3>
+        <p>
+          If you make payment, keep your receipt or screenshot for confirmation. Thank you for supporting the ministry.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-links" aria-label="Social media links">
+      <a class="footer-link footer-link-whatsapp" href="https://www.whatsapp.com/" target="_blank" rel="noopener noreferrer">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+        <span>WhatsApp</span>
+      </a>
+      <a class="footer-link footer-link-telegram" href="https://t.me/" target="_blank" rel="noopener noreferrer">
+        <i class="fa-brands fa-telegram" aria-hidden="true"></i>
+        <span>Telegram</span>
+      </a>
+      <a class="footer-link footer-link-youtube" href="https://www.youtube.com/@faithgatewayafrica" target="_blank" rel="noopener noreferrer">
+        <i class="fa-brands fa-youtube" aria-hidden="true"></i>
+        <span>YouTube</span>
+      </a>
+    </div>
+    <p class="footer-copy">Copyright &copy; 2026 Bright Obeng Fianko. All rights reserved.</p>
+  </footer>
+
+  <div class="chat-float-wrap">
+    <a class="chat-float" href="chat.html" title="Chat" aria-label="Open chat">
+      <i class="fa-solid fa-comments"></i>
+    </a>
+    <span class="chat-float-label">Chat</span>
+  </div>
+
+  <p class="live-message" id="donation-live-message" aria-live="polite"></p>
+
+  <script src="donation.js"></script>
+  <script src="account-menu.js"></script>
+  <script src="nav-notifications.js"></script>
+</body>
+</html>

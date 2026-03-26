@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harvest Nations | Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div id="bgSlider" aria-hidden="true">
+    <div class="bg-layer"></div>
+    <div class="bg-layer"></div>
+  </div>
+
+  <main class="auth-shell">
+    <a class="back-home" id="auth-main-link" href="/bright/mainpage/mainpage.html">
+      <i class="fa-solid fa-arrow-left"></i>
+      <span class="back-home-label">Back to Main Page</span>
+    </a>
+
+    <section class="login-container auth-card">
+      <img src="churchlogo.jpeg" alt="Harvest Nations logo" class="logo-mark">
+      <p class="org-name">HARVEST NATIONS</p>
+      <h1>International (HNI)</h1>
+
+      <div id="loginError" class="error"></div>
+
+      <form id="loginForm" novalidate>
+        <input type="email" id="username" placeholder="Email Address">
+
+        <div class="password-container">
+          <input type="password" id="loginPassword" placeholder="Password">
+          <i id="togglePassword" class="fa fa-eye toggle-password" aria-label="Toggle password visibility"></i>
+        </div>
+
+        <button type="button" id="login-submit-btn">Log In</button>
+      </form>
+
+      <div class="login-footer">
+        <a href="/bright/forget.html">Forgot Password?</a>
+        <a href="/bright/signup.html">Create Account</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="main.js?v=20260325-authfix"></script>
+  <script src="bgSlider.js?v=20260325-authfix"></script>
+</body>
+</html>

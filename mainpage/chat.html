@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HNI Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body class="chat-page-body">
+  <main class="chat-layout">
+    <header class="chat-topbar" id="site-header">
+      <div class="chat-top-left">
+        <span class="chat-status-dot" aria-hidden="true"></span>
+        <h1>Chat</h1>
+        <span class="chat-top-sep">-</span>
+        <p id="chat-user-name" class="chat-top-user">Member</p>
+      </div>
+
+      <div class="chat-top-actions">
+        <a class="chat-top-btn chat-back-btn" href="mainpage.html">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>Back</span>
+        </a>
+        <button type="button" id="chat-logout-btn" class="chat-top-btn chat-logout-btn">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="chat-shell">
+      <aside class="chat-users-panel">
+        <div class="chat-users-head">
+          <h2>Messages</h2>
+          <p id="chat-server-status" class="chat-server-status">Connecting...</p>
+        </div>
+
+        <label class="sr-only" for="chat-user-search">Search users</label>
+        <div class="chat-search-wrap">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input id="chat-user-search" list="chat-user-suggestions" type="search" placeholder="Search people...">
+        </div>
+
+        <datalist id="chat-user-suggestions"></datalist>
+
+        <div id="chat-user-empty-state" class="chat-user-empty-state" hidden>
+          <i class="fa-solid fa-box-archive" aria-hidden="true"></i>
+          <p>No conversations yet.<br>Search for someone above to start.</p>
+        </div>
+
+        <ul id="chat-user-list" class="chat-user-list"></ul>
+      </aside>
+
+      <section class="chat-thread-panel">
+        <div id="chat-thread-empty-state" class="chat-thread-empty-state">
+          <div class="chat-empty-icon">
+            <i class="fa-solid fa-comments"></i>
+          </div>
+          <h3>Start a conversation</h3>
+          <p>Pick a chat on the left or search for someone to begin.</p>
+        </div>
+
+        <header class="chat-thread-head" id="chat-thread-head" hidden>
+          <h2 id="chat-thread-title">Conversation</h2>
+          <p id="chat-thread-subtitle">Private chat</p>
+        </header>
+
+        <div id="chat-thread" class="chat-thread" aria-live="polite"></div>
+
+        <form id="chat-form" class="chat-form" hidden>
+          <label class="sr-only" for="chat-message-input">Message</label>
+          <textarea
+            id="chat-message-input"
+            maxlength="1200"
+            placeholder="Type your message here..."
+            required
+          ></textarea>
+          <button id="chat-send-btn" type="submit">Send</button>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <p class="live-message" id="chat-live-message" aria-live="polite"></p>
+  <script src="chat.js"></script>
+</body>
+</html>

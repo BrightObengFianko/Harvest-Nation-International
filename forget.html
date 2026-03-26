@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harvest Nations | Forgot Password</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div id="bgSlider" aria-hidden="true">
+    <div class="bg-layer"></div>
+    <div class="bg-layer"></div>
+  </div>
+
+  <main class="auth-shell">
+    <a class="back-home" id="auth-main-link" href="/bright/mainpage/mainpage.html">
+      <i class="fa-solid fa-arrow-left"></i>
+      <span class="back-home-label">Back to Main Page</span>
+    </a>
+
+    <section class="card auth-card">
+      <div class="logo">
+        <img src="churchlogo.jpeg" alt="Harvest Nations logo" class="logo-mark">
+      </div>
+
+      <p class="org-name">HARVEST NATIONS</p>
+      <h1>Reset Password</h1>
+
+      <p class="links" style="margin-top: 0; margin-bottom: 14px;">
+        Enter your email address and we will send a reset link.
+      </p>
+
+      <div id="forgotError" class="error"></div>
+
+      <form id="forgotForm">
+        <input type="email" id="forgotEmail" placeholder="Email Address">
+        <button type="submit">Reset Password</button>
+      </form>
+
+      <div class="links">
+        <a href="/bright/login.html">Back to Login</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="main.js?v=20260325-authfix"></script>
+  <script src="bgSlider.js?v=20260325-authfix"></script>
+</body>
+</html>
