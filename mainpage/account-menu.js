@@ -1,6 +1,7 @@
 (() => {
   const CURRENT_USER_KEY = "hni_current_user";
   const ACCOUNT_PROFILE_STORAGE_KEY = "hni_account_profiles_v1";
+  const OWNER_ADMIN_EMAIL = "brightobengfianko@gmail.com";
   const authLinks = document.querySelector("#auth-links");
   const accountShell = document.querySelector("#account-shell");
   const accountToggle = document.querySelector("#account-toggle");
@@ -10,6 +11,7 @@
   const accountName = document.querySelector("#account-name");
   const accountEmail = document.querySelector("#account-email");
   const accountSignoutBtn = document.querySelector("#account-signout-btn");
+  const accountSignoutWrap = document.querySelector(".account-signout-wrap");
   const accountAvatarBtn = document.querySelector("#account-avatar-btn");
   const accountAvatarInput = document.querySelector("#account-avatar-input");
   const accountAvatarImage = document.querySelector("#account-avatar-image");
@@ -28,6 +30,7 @@
   const mobileAccountAvatarImage = document.querySelector("#mobile-account-avatar-image");
   const mobileAccountAvatarIcon = document.querySelector("#mobile-account-avatar-icon");
   const mobileAccountSignoutBtn = document.querySelector("#mobile-account-signout-btn");
+  const mobileAccountSignoutWrap = document.querySelector(".mobile-account-signout-wrap");
   const mobileAccountLogoutConfirm = document.querySelector("#mobile-account-logout-confirm");
   const mobileAccountLogoutYes = document.querySelector("#mobile-account-logout-yes");
   const mobileAccountLogoutNo = document.querySelector("#mobile-account-logout-no");
@@ -80,11 +83,42 @@
     return (
       user &&
       typeof user === "object" &&
-      (user.is_admin === true ||
+      (isOwnerAdminEmail(user) ||
+        user.is_admin === true ||
         user.is_admin === 1 ||
         String(user.is_admin || "").trim() === "1" ||
         user.isAdmin === true)
     );
+  }
+
+  function isOwnerAdminEmail(userOrEmail) {
+    const email =
+      typeof userOrEmail === "string"
+        ? userOrEmail
+        : String(userOrEmail?.email || "");
+    return String(email || "").trim().toLowerCase() === OWNER_ADMIN_EMAIL;
+  }
+
+  function saveCurrentUserRecord(user) {
+    try {
+      window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  function normalizeCurrentUserRecord(user) {
+    if (!isValidSignedInUser(user) || !isOwnerAdminEmail(user) || isAdminUser(user)) {
+      return user;
+    }
+
+    const nextUser = {
+      ...user,
+      is_admin: true,
+      isAdmin: true,
+    };
+    saveCurrentUserRecord(nextUser);
+    return nextUser;
   }
 
   function buildLoginUrl() {
@@ -266,7 +300,7 @@
   }
 
   function renderAccountState() {
-    const user = getCurrentUserRecord();
+    const user = normalizeCurrentUserRecord(getCurrentUserRecord());
     const signedIn = isValidSignedInUser(user);
     const isAdmin = isAdminUser(user);
 
@@ -334,20 +368,32 @@
     });
   }
 
+  function openDesktopLogoutConfirm(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    showLogoutConfirm("desktop");
+  }
+
+  function openMobileLogoutConfirm(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    showLogoutConfirm("mobile");
+  }
+
   if (accountSignoutBtn) {
-    accountSignoutBtn.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      showLogoutConfirm("desktop");
-    });
+    accountSignoutBtn.addEventListener("click", openDesktopLogoutConfirm);
+  }
+
+  if (accountSignoutWrap) {
+    accountSignoutWrap.addEventListener("click", openDesktopLogoutConfirm);
   }
 
   if (mobileAccountSignoutBtn) {
-    mobileAccountSignoutBtn.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      showLogoutConfirm("mobile");
-    });
+    mobileAccountSignoutBtn.addEventListener("click", openMobileLogoutConfirm);
+  }
+
+  if (mobileAccountSignoutWrap) {
+    mobileAccountSignoutWrap.addEventListener("click", openMobileLogoutConfirm);
   }
 
   if (mobileAccountToggle) {
@@ -383,7 +429,13 @@
     closeAccountMenu();
     closeMobileAccountPanel();
     renderAccountState();
-    window.location.assign(buildLoginUrl());
+    const loginUrl = buildLoginUrl();
+    window.location.replace(loginUrl);
+    window.setTimeout(() => {
+      if (window.location.href !== loginUrl) {
+        window.location.assign(loginUrl);
+      }
+    }, 80);
   }
 
   if (accountLogoutYes) {

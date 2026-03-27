@@ -5,6 +5,7 @@ const WEEKLY_CONTENT_STORAGE_KEY = "hni_weekly_content_v1";
 const LOCAL_USERS_KEY = "hni_local_users_v1";
 const LOCAL_LOGIN_EVENTS_KEY = "hni_local_login_events_v1";
 const CURRENT_USER_KEY = "hni_current_user";
+const OWNER_ADMIN_EMAIL = "brightobengfianko@gmail.com";
 const USERS_PAGE_SIZE = 5;
 const VIDEOS_PAGE_SIZE = 4;
 const MAX_WEEKLY_QUOTES = 12;
@@ -270,13 +271,22 @@ function confirmAdminRoleChange(userName, nextIsAdmin) {
 function isUserAdmin(user) {
   return Boolean(
     user &&
-      (user.is_admin === true ||
+      (isOwnerAdminEmail(user) ||
+        user.is_admin === true ||
         user.is_admin === 1 ||
         user.is_admin === "1" ||
         user.isAdmin === true ||
         user.isAdmin === 1 ||
         user.isAdmin === "1")
   );
+}
+
+function isOwnerAdminEmail(userOrEmail) {
+  const email =
+    typeof userOrEmail === "string"
+      ? userOrEmail
+      : String(userOrEmail?.email || "");
+  return String(email || "").trim().toLowerCase() === OWNER_ADMIN_EMAIL;
 }
 
 function getFilteredUsers(users) {
@@ -316,7 +326,21 @@ function getStoredUserRecord() {
       return null;
     }
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : null;
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+
+    if (isOwnerAdminEmail(parsed) && !isUserAdmin(parsed)) {
+      const nextUser = {
+        ...parsed,
+        is_admin: true,
+        isAdmin: true,
+      };
+      window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(nextUser));
+      return nextUser;
+    }
+
+    return parsed;
   } catch {
     return null;
   }
@@ -423,6 +447,16 @@ async function tryAutoUnlockAdminAccess() {
   const storedEmail = String(storedUser?.email || "").trim().toLowerCase();
   if (!storedEmail) {
     return false;
+  }
+
+  if (isOwnerAdminEmail(storedEmail)) {
+    await unlockDashboardAfterAuth({
+      id: storedUser?.id || 1,
+      fullname: storedUser?.fullname || storedEmail,
+      email: storedEmail,
+      is_admin: true,
+    });
+    return true;
   }
 
   if (isUserAdmin(storedUser)) {

@@ -387,6 +387,7 @@ a {
 
 .account-signout-wrap {
   align-items: center;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -2131,6 +2132,7 @@ a {
 
   .mobile-account-signout-wrap {
     align-items: center;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
     gap: 3px;
