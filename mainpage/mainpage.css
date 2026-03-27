@@ -122,6 +122,7 @@ a {
 }
 
 .mobile-auth-links,
+.mobile-account-toggle,
 .mobile-account-panel {
   display: none;
 }
@@ -1957,8 +1958,35 @@ a {
   }
 
   .mobile-auth-links[hidden],
+  .mobile-account-toggle[hidden],
   .mobile-account-panel[hidden] {
     display: none !important;
+  }
+
+  .mobile-account-toggle {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: #f5fbff;
+    cursor: pointer;
+    display: flex;
+    font-family: "Oswald", sans-serif;
+    font-size: 1.05rem;
+    justify-content: space-between;
+    letter-spacing: 0.04em;
+    padding: 10px;
+    text-align: left;
+    text-transform: uppercase;
+    width: 100%;
+  }
+
+  .mobile-account-toggle-caret {
+    font-size: 0.84rem;
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-account-toggle[aria-expanded="true"] .mobile-account-toggle-caret {
+    transform: rotate(180deg);
   }
 
   .mobile-auth-links {
@@ -1981,7 +2009,7 @@ a {
     color: #f6fbff;
     display: grid;
     gap: 10px;
-    margin-top: 8px;
+    margin-top: 4px;
     padding: 12px;
   }
 

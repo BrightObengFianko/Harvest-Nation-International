@@ -23,15 +23,10 @@
     </button>
 
     <nav class="site-nav" id="site-nav" aria-label="Main navigation">
-      <a href="mainpage.html">MAIN</a>
-      <a href="mainpage.html#weekly-theme-section">ABOUT</a>
-      <a href="lessons.html">LESSONS</a>
-      <a href="donation.html" aria-current="page">DONATE</a>
-      <a href="admin.html" data-admin-link="true" hidden>Admin</a>
-      <div class="mobile-auth-links" id="mobile-auth-links" hidden>
-        <a href="/bright/login.html" class="btn btn-light">Sign In</a>
-        <a href="/bright/signup.html" class="btn btn-solid">Sign Up</a>
-      </div>
+      <button type="button" class="mobile-account-toggle" id="mobile-account-toggle" hidden aria-expanded="false" aria-controls="mobile-account-panel">
+        <span>Account</span>
+        <i class="fa-solid fa-angle-down mobile-account-toggle-caret" aria-hidden="true"></i>
+      </button>
       <section class="mobile-account-panel" id="mobile-account-panel" hidden aria-label="Mobile account details">
         <div class="mobile-account-top">
           <p class="mobile-account-heading">Account</p>
@@ -60,6 +55,15 @@
           </div>
         </div>
       </section>
+      <a href="mainpage.html">MAIN</a>
+      <a href="mainpage.html#weekly-theme-section">ABOUT</a>
+      <a href="lessons.html">LESSONS</a>
+      <a href="donation.html" aria-current="page">DONATE</a>
+      <a href="admin.html" data-admin-link="true" hidden>Admin</a>
+      <div class="mobile-auth-links" id="mobile-auth-links" hidden>
+        <a href="/bright/login.html" class="btn btn-light">Sign In</a>
+        <a href="/bright/signup.html" class="btn btn-solid">Sign Up</a>
+      </div>
     </nav>
 
     <div class="auth">

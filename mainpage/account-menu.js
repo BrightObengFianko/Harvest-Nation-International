@@ -19,6 +19,7 @@
   const accountLogoutYes = document.querySelector("#account-logout-yes");
   const accountLogoutNo = document.querySelector("#account-logout-no");
   const mobileAuthLinks = document.querySelector("#mobile-auth-links");
+  const mobileAccountToggle = document.querySelector("#mobile-account-toggle");
   const mobileAccountPanel = document.querySelector("#mobile-account-panel");
   const mobileAccountName = document.querySelector("#mobile-account-name");
   const mobileAccountEmail = document.querySelector("#mobile-account-email");
@@ -128,6 +129,38 @@
     }
   }
 
+  function closeMobileAccountPanel() {
+    if (mobileAccountPanel) {
+      mobileAccountPanel.hidden = true;
+    }
+    if (mobileAccountToggle) {
+      mobileAccountToggle.setAttribute("aria-expanded", "false");
+    }
+    hideLogoutConfirm();
+  }
+
+  function openMobileAccountPanel() {
+    if (mobileAccountPanel) {
+      mobileAccountPanel.hidden = false;
+    }
+    if (mobileAccountToggle) {
+      mobileAccountToggle.setAttribute("aria-expanded", "true");
+    }
+  }
+
+  function toggleMobileAccountPanel() {
+    if (!mobileAccountPanel) {
+      return;
+    }
+
+    if (mobileAccountPanel.hidden) {
+      openMobileAccountPanel();
+      return;
+    }
+
+    closeMobileAccountPanel();
+  }
+
   function showLogoutConfirm(target = "desktop") {
     hideLogoutConfirm();
 
@@ -229,12 +262,23 @@
       mobileAuthLinks.hidden = signedIn;
     }
 
+    if (mobileAccountToggle) {
+      mobileAccountToggle.hidden = !signedIn;
+    }
+
     if (accountShell) {
       accountShell.hidden = !signedIn;
     }
 
-    if (mobileAccountPanel) {
-      mobileAccountPanel.hidden = !signedIn;
+    if (mobileAccountPanel && !signedIn) {
+      mobileAccountPanel.hidden = true;
+    }
+
+    if (!signedIn) {
+      if (mobileAccountToggle) {
+        mobileAccountToggle.setAttribute("aria-expanded", "false");
+      }
+      closeMobileAccountPanel();
     }
 
     adminNavLinks.forEach((link) => {
@@ -283,6 +327,14 @@
   if (mobileAccountSignoutBtn) {
     mobileAccountSignoutBtn.addEventListener("click", () => {
       showLogoutConfirm("mobile");
+    });
+  }
+
+  if (mobileAccountToggle) {
+    mobileAccountToggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleMobileAccountPanel();
     });
   }
 
@@ -373,11 +425,15 @@
     if (!target.closest("#account-shell")) {
       closeAccountMenu();
     }
+    if (!target.closest("#mobile-account-panel") && !target.closest("#mobile-account-toggle")) {
+      closeMobileAccountPanel();
+    }
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeAccountMenu();
+      closeMobileAccountPanel();
     }
   });
 
