@@ -28,6 +28,38 @@
       <a href="lessons.html">LESSONS</a>
       <a href="donation.html" aria-current="page">DONATE</a>
       <a href="admin.html" data-admin-link="true" hidden>Admin</a>
+      <div class="mobile-auth-links" id="mobile-auth-links" hidden>
+        <a href="/bright/login.html" class="btn btn-light">Sign In</a>
+        <a href="/bright/signup.html" class="btn btn-solid">Sign Up</a>
+      </div>
+      <section class="mobile-account-panel" id="mobile-account-panel" hidden aria-label="Mobile account details">
+        <div class="mobile-account-top">
+          <p class="mobile-account-heading">Account</p>
+          <div class="mobile-account-signout-wrap">
+            <button type="button" class="mobile-account-signout-btn" id="mobile-account-signout-btn" aria-label="Sign out">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+            <span class="mobile-account-signout-label">Log Out</span>
+          </div>
+        </div>
+        <div class="mobile-account-card">
+          <div class="mobile-account-avatar" aria-hidden="true">
+            <img class="mobile-account-avatar-image" id="mobile-account-avatar-image" alt="Account profile image" hidden>
+            <i class="fa-regular fa-user mobile-account-avatar-icon" id="mobile-account-avatar-icon"></i>
+          </div>
+          <div class="mobile-account-details">
+            <p class="mobile-account-name" id="mobile-account-name">Member</p>
+            <p class="mobile-account-email" id="mobile-account-email">member@example.com</p>
+          </div>
+        </div>
+        <div class="mobile-account-confirm" id="mobile-account-logout-confirm" hidden>
+          <p class="account-confirm-text">Do you want to log out?</p>
+          <div class="account-confirm-actions">
+            <button type="button" class="btn btn-light account-confirm-no" id="mobile-account-logout-no">No</button>
+            <button type="button" class="btn btn-solid account-confirm-yes" id="mobile-account-logout-yes">Yes</button>
+          </div>
+        </div>
+      </section>
     </nav>
 
     <div class="auth">

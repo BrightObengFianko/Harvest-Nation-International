@@ -18,6 +18,16 @@
   const accountLogoutConfirm = document.querySelector("#account-logout-confirm");
   const accountLogoutYes = document.querySelector("#account-logout-yes");
   const accountLogoutNo = document.querySelector("#account-logout-no");
+  const mobileAuthLinks = document.querySelector("#mobile-auth-links");
+  const mobileAccountPanel = document.querySelector("#mobile-account-panel");
+  const mobileAccountName = document.querySelector("#mobile-account-name");
+  const mobileAccountEmail = document.querySelector("#mobile-account-email");
+  const mobileAccountAvatarImage = document.querySelector("#mobile-account-avatar-image");
+  const mobileAccountAvatarIcon = document.querySelector("#mobile-account-avatar-icon");
+  const mobileAccountSignoutBtn = document.querySelector("#mobile-account-signout-btn");
+  const mobileAccountLogoutConfirm = document.querySelector("#mobile-account-logout-confirm");
+  const mobileAccountLogoutYes = document.querySelector("#mobile-account-logout-yes");
+  const mobileAccountLogoutNo = document.querySelector("#mobile-account-logout-no");
   const adminNavLinks = Array.from(document.querySelectorAll("[data-admin-link='true']"));
 
   if (!authLinks && !accountShell) {
@@ -113,9 +123,21 @@
     if (accountLogoutConfirm) {
       accountLogoutConfirm.hidden = true;
     }
+    if (mobileAccountLogoutConfirm) {
+      mobileAccountLogoutConfirm.hidden = true;
+    }
   }
 
-  function showLogoutConfirm() {
+  function showLogoutConfirm(target = "desktop") {
+    hideLogoutConfirm();
+
+    if (target === "mobile") {
+      if (mobileAccountLogoutConfirm) {
+        mobileAccountLogoutConfirm.hidden = false;
+      }
+      return;
+    }
+
     if (accountLogoutConfirm) {
       accountLogoutConfirm.hidden = false;
     }
@@ -137,6 +159,13 @@
       accountToggleImage.src = profileImage;
       accountToggleImage.hidden = false;
       accountToggleIcon.hidden = true;
+      if (mobileAccountAvatarImage) {
+        mobileAccountAvatarImage.src = profileImage;
+        mobileAccountAvatarImage.hidden = false;
+      }
+      if (mobileAccountAvatarIcon) {
+        mobileAccountAvatarIcon.hidden = true;
+      }
       return;
     }
 
@@ -146,6 +175,13 @@
     accountToggleImage.removeAttribute("src");
     accountToggleImage.hidden = true;
     accountToggleIcon.hidden = false;
+    if (mobileAccountAvatarImage) {
+      mobileAccountAvatarImage.removeAttribute("src");
+      mobileAccountAvatarImage.hidden = true;
+    }
+    if (mobileAccountAvatarIcon) {
+      mobileAccountAvatarIcon.hidden = false;
+    }
   }
 
   function closeAccountMenu() {
@@ -189,8 +225,16 @@
       authLinks.hidden = signedIn;
     }
 
+    if (mobileAuthLinks) {
+      mobileAuthLinks.hidden = signedIn;
+    }
+
     if (accountShell) {
       accountShell.hidden = !signedIn;
+    }
+
+    if (mobileAccountPanel) {
+      mobileAccountPanel.hidden = !signedIn;
     }
 
     adminNavLinks.forEach((link) => {
@@ -210,6 +254,15 @@
       accountEmail.textContent = String(user.email || "No email address").trim() || "No email address";
     }
 
+    if (mobileAccountName) {
+      mobileAccountName.textContent = getDisplayName(user);
+    }
+
+    if (mobileAccountEmail) {
+      mobileAccountEmail.textContent =
+        String(user.email || "No email address").trim() || "No email address";
+    }
+
     applyProfileImage(user);
   }
 
@@ -223,7 +276,13 @@
 
   if (accountSignoutBtn) {
     accountSignoutBtn.addEventListener("click", () => {
-      showLogoutConfirm();
+      showLogoutConfirm("desktop");
+    });
+  }
+
+  if (mobileAccountSignoutBtn) {
+    mobileAccountSignoutBtn.addEventListener("click", () => {
+      showLogoutConfirm("mobile");
     });
   }
 
@@ -233,13 +292,25 @@
     });
   }
 
-  if (accountLogoutYes) {
-    accountLogoutYes.addEventListener("click", () => {
-      window.localStorage.removeItem(CURRENT_USER_KEY);
-      closeAccountMenu();
-      renderAccountState();
-      window.location.assign(buildLoginUrl());
+  if (mobileAccountLogoutNo) {
+    mobileAccountLogoutNo.addEventListener("click", () => {
+      hideLogoutConfirm();
     });
+  }
+
+  function performLogout() {
+    window.localStorage.removeItem(CURRENT_USER_KEY);
+    closeAccountMenu();
+    renderAccountState();
+    window.location.assign(buildLoginUrl());
+  }
+
+  if (accountLogoutYes) {
+    accountLogoutYes.addEventListener("click", performLogout);
+  }
+
+  if (mobileAccountLogoutYes) {
+    mobileAccountLogoutYes.addEventListener("click", performLogout);
   }
 
   if (accountAvatarBtn && accountAvatarInput) {

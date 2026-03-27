@@ -121,6 +121,11 @@ a {
   display: none !important;
 }
 
+.mobile-auth-links,
+.mobile-account-panel {
+  display: none;
+}
+
 .site-nav a::after {
   background: var(--teal-400);
   border-radius: 999px;
@@ -1945,6 +1950,142 @@ a {
 
   .auth {
     display: none;
+  }
+
+  .site-nav {
+    align-items: stretch;
+  }
+
+  .mobile-auth-links[hidden],
+  .mobile-account-panel[hidden] {
+    display: none !important;
+  }
+
+  .mobile-auth-links {
+    border-top: 1px solid rgba(233, 243, 255, 0.16);
+    display: grid;
+    gap: 8px;
+    margin-top: 6px;
+    padding-top: 12px;
+  }
+
+  .mobile-auth-links .btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .mobile-account-panel {
+    background: rgba(241, 247, 255, 0.1);
+    border: 1px solid rgba(216, 231, 255, 0.18);
+    border-radius: 16px;
+    color: #f6fbff;
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 12px;
+  }
+
+  .mobile-account-top {
+    align-items: flex-start;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .mobile-account-heading {
+    color: #ffffff;
+    font-family: "Oswald", sans-serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .mobile-account-signout-wrap {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .mobile-account-signout-btn {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 999px;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
+  }
+
+  .mobile-account-signout-label {
+    color: #edf5ff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .mobile-account-card {
+    align-items: center;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 60px 1fr;
+  }
+
+  .mobile-account-avatar {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    height: 60px;
+    overflow: hidden;
+    position: relative;
+    width: 60px;
+  }
+
+  .mobile-account-avatar-image {
+    height: 100%;
+    inset: 0;
+    object-fit: cover;
+    position: absolute;
+    width: 100%;
+  }
+
+  .mobile-account-avatar-icon {
+    color: #ffffff;
+    font-size: 1.75rem;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .mobile-account-details {
+    min-width: 0;
+  }
+
+  .mobile-account-name {
+    color: #ffffff;
+    font-size: 0.98rem;
+    font-weight: 600;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .mobile-account-email {
+    color: #dce9ff;
+    font-size: 0.82rem;
+    margin-top: 4px;
+    word-break: break-word;
+  }
+
+  .mobile-account-confirm {
+    background: rgba(10, 23, 45, 0.44);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 14px;
+    padding: 10px;
   }
 
   .hero-overlay {
