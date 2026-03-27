@@ -1730,6 +1730,7 @@ a {
   font-size: 1.45rem;
   height: 60px;
   justify-content: center;
+  position: relative;
   width: 60px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1978,7 +1979,7 @@ a {
     font-size: 1.05rem;
     justify-content: space-between;
     letter-spacing: 0.04em;
-    padding: 10px 6px 10px 2px;
+    padding: 10px 6px 10px 0;
     text-align: left;
     text-transform: uppercase;
     width: 100%;
@@ -1987,7 +1988,7 @@ a {
   .mobile-account-toggle-main {
     align-items: center;
     display: inline-flex;
-    gap: 12px;
+    gap: 14px;
     min-width: 0;
   }
 
@@ -1995,10 +1996,10 @@ a {
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 50%;
-    height: 38px;
+    height: 46px;
     overflow: hidden;
     position: relative;
-    width: 38px;
+    width: 46px;
   }
 
   .mobile-account-toggle-image {
@@ -2011,7 +2012,7 @@ a {
 
   .mobile-account-toggle-icon {
     color: #ffffff;
-    font-size: 1.15rem;
+    font-size: 1.38rem;
     left: 50%;
     position: absolute;
     top: 50%;
@@ -2193,11 +2194,11 @@ a {
     font-weight: 700;
     height: 19px;
     justify-content: center;
-    left: -3px;
-    min-width: 19px;
+    left: -5px;
+    min-width: 20px;
     padding: 0 4px;
     position: absolute;
-    top: -4px;
+    top: -6px;
     z-index: 2;
   }
 
