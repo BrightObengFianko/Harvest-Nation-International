@@ -17,6 +17,10 @@ const lessonsVideoToggleBtn = document.querySelector("#lessons-video-toggle");
 const lessonViewerModal = document.querySelector("#lesson-viewer-modal");
 const lessonViewerCloseBtn = document.querySelector("#lesson-viewer-close-btn");
 const lessonCommentsList = document.querySelector("#lesson-comments-list");
+const lessonCommentsTotalLabel = document.querySelector("#lesson-comments-total-label");
+const lessonCommentInput = document.querySelector("#lesson-video-comment");
+const lessonPostCommentBtn = document.querySelector("#lesson-post-comment-btn");
+const lessonEmojiButtons = document.querySelectorAll("[data-lesson-emoji]");
 const lessonsUserName = document.querySelector("#lessons-user-name");
 const lessonsLogoutBtn = document.querySelector("#lessons-logout-btn");
 const liveMessage = document.querySelector("#lessons-live-message");
@@ -27,6 +31,8 @@ const ACTIVE_VIDEO_KEY = "hni_active_video_id_v1";
 const WEEKLY_CONTENT_STORAGE_KEY = "hni_weekly_content_v1";
 const CURRENT_USER_KEY = "hni_current_user";
 const LESSONS_VIDEO_PREVIEW_LIMIT = 5;
+const MAX_COMMENT_LENGTH = 220;
+const MAX_REPLY_LENGTH = 220;
 
 const defaultVideos = [
   {
@@ -60,6 +66,7 @@ const defaultWeeklyContent = {
 let currentActiveVideo = null;
 let showAllLessonVideos = false;
 let lessonSearchQuery = "";
+let lessonStoredComments = [];
 
 function activateRevealElements() {
   document.querySelectorAll(".reveal").forEach((element) => {
@@ -114,6 +121,30 @@ function getDisplayName(user) {
   return String(user?.email || "").trim() || "Member";
 }
 
+function getCurrentUserName() {
+  return getDisplayName(getCurrentUserRecord()) || "Member";
+}
+
+function getCurrentReactorKey() {
+  const user = getCurrentUserRecord();
+  const userId = String(user?.id || "").trim();
+  if (userId) {
+    return `user:${userId}`;
+  }
+
+  const email = String(user?.email || "").trim().toLowerCase();
+  if (email) {
+    return `email:${email}`;
+  }
+
+  const fullName = String(user?.fullname || "").trim().toLowerCase();
+  if (fullName) {
+    return `name:${fullName}`;
+  }
+
+  return "member";
+}
+
 function buildLoginRedirectUrl() {
   const loginUrl =
     window.location.origin && /^https?:$/i.test(String(window.location.protocol || ""))
@@ -138,6 +169,35 @@ function cleanWeeklyText(value, maxLength = 200) {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, maxLength);
+}
+
+function formatCompact(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    return "0";
+  }
+
+  const abs = Math.abs(number);
+  if (abs < 1000) {
+    return new Intl.NumberFormat("en-US").format(Math.trunc(number));
+  }
+
+  const units = [
+    { value: 1_000_000_000, suffix: "B" },
+    { value: 1_000_000, suffix: "M" },
+    { value: 1_000, suffix: "K" },
+  ];
+
+  const selectedUnit = units.find((unit) => abs >= unit.value) || units[units.length - 1];
+  const compactValue = number / selectedUnit.value;
+  const rounded =
+    Math.abs(compactValue) >= 100
+      ? compactValue.toFixed(0)
+      : Math.abs(compactValue) >= 10
+      ? compactValue.toFixed(1)
+      : compactValue.toFixed(1);
+
+  return `${rounded.replace(/\.0$/, "")}${selectedUnit.suffix}`;
 }
 
 function getCommentAuthorName(item) {
@@ -198,6 +258,67 @@ function formatCommentTime(value) {
   return new Date(createdAt).toLocaleDateString();
 }
 
+function normalizeLikedBy(rawLikedBy) {
+  const list = Array.isArray(rawLikedBy)
+    ? rawLikedBy
+    : typeof rawLikedBy === "string"
+    ? [rawLikedBy]
+    : [];
+
+  return Array.from(new Set(list.map((value) => String(value || "").trim()).filter(Boolean)));
+}
+
+function normalizeVoteLists(rawLikedBy, rawDislikedBy, preferredReaction = "", preferredKey = "") {
+  const likedSet = new Set(normalizeLikedBy(rawLikedBy));
+  const dislikedSet = new Set(normalizeLikedBy(rawDislikedBy));
+
+  Array.from(likedSet).forEach((key) => {
+    if (!dislikedSet.has(key)) {
+      return;
+    }
+
+    if (preferredReaction === "dislike" && key === preferredKey) {
+      likedSet.delete(key);
+      return;
+    }
+
+    dislikedSet.delete(key);
+  });
+
+  return {
+    likedBy: Array.from(likedSet),
+    dislikedBy: Array.from(dislikedSet),
+  };
+}
+
+function normalizeLikeCount(rawCount, likedByList) {
+  const likedBySize = Array.isArray(likedByList) ? likedByList.length : 0;
+  if (likedBySize > 0) {
+    return likedBySize;
+  }
+
+  const parsed = Number(rawCount);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return 0;
+  }
+
+  return Math.floor(parsed);
+}
+
+function normalizeDislikeCount(rawCount, dislikedByList) {
+  const size = Array.isArray(dislikedByList) ? dislikedByList.length : 0;
+  if (size > 0) {
+    return size;
+  }
+
+  const parsed = Number(rawCount);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return 0;
+  }
+
+  return Math.floor(parsed);
+}
+
 function normalizeLessonReplies(rawReplies) {
   if (!Array.isArray(rawReplies)) {
     return [];
@@ -205,13 +326,21 @@ function normalizeLessonReplies(rawReplies) {
 
   return rawReplies
     .filter((item) => item && typeof item.text === "string" && item.text.trim())
-    .map((item) => ({
-      id: String(item.id || `lesson-reply-${Date.now()}-${Math.random().toString(16).slice(2)}`),
-      authorName: getCommentAuthorName(item),
-      text: cleanWeeklyText(item.text, 240),
-      createdAt: normalizeCommentTimestamp(item.createdAt),
-    }))
-    .filter((item) => item.text);
+    .map((item) => {
+      const { likedBy, dislikedBy } = normalizeVoteLists(item.likedBy, item.dislikedBy);
+      return {
+        id: String(item.id || `lesson-reply-${Date.now()}-${Math.random().toString(16).slice(2)}`),
+        authorName: getCommentAuthorName(item),
+        text: cleanWeeklyText(item.text, MAX_REPLY_LENGTH),
+        createdAt: normalizeCommentTimestamp(item.createdAt),
+        likedBy,
+        likeCount: normalizeLikeCount(item.likeCount ?? item.likes, likedBy),
+        dislikedBy,
+        dislikeCount: normalizeDislikeCount(item.dislikeCount ?? item.dislikes, dislikedBy),
+      };
+    })
+    .filter((item) => item.text)
+    .slice(-100);
 }
 
 function getFallbackCommentVideoId() {
@@ -235,15 +364,31 @@ function normalizeLessonCommentCollection(rawItems, videoId = "") {
 
   return rawItems
     .filter((item) => item && typeof item.text === "string" && item.text.trim())
-    .map((item) => ({
-      id: String(item.id || `lesson-comment-${Date.now()}-${Math.random().toString(16).slice(2)}`),
-      videoId: String(item.videoId || videoId || "").trim(),
-      authorName: getCommentAuthorName(item),
-      text: cleanWeeklyText(item.text, 240),
-      createdAt: normalizeCommentTimestamp(item.createdAt),
-      replies: normalizeLessonReplies(item.replies),
-    }))
-    .filter((item) => item.text);
+    .map((item) => {
+      const { likedBy, dislikedBy } = normalizeVoteLists(item.likedBy, item.dislikedBy);
+      return {
+        id: String(item.id || `lesson-comment-${Date.now()}-${Math.random().toString(16).slice(2)}`),
+        videoId: String(item.videoId || videoId || "").trim(),
+        authorName: getCommentAuthorName(item),
+        text: cleanWeeklyText(item.text, MAX_COMMENT_LENGTH),
+        createdAt: normalizeCommentTimestamp(item.createdAt),
+        reactions:
+          item.reactions && typeof item.reactions === "object" && !Array.isArray(item.reactions)
+            ? item.reactions
+            : {},
+        userReactions:
+          item.userReactions && typeof item.userReactions === "object" && !Array.isArray(item.userReactions)
+            ? item.userReactions
+            : {},
+        replies: normalizeLessonReplies(item.replies),
+        likedBy,
+        likeCount: normalizeLikeCount(item.likeCount ?? item.likes, likedBy),
+        dislikedBy,
+        dislikeCount: normalizeDislikeCount(item.dislikeCount ?? item.dislikes, dislikedBy),
+      };
+    })
+    .filter((item) => item.text)
+    .sort((a, b) => a.createdAt - b.createdAt);
 }
 
 function saveLessonCommentStore(store) {
@@ -321,6 +466,17 @@ function loadLessonComments(videoId = getFallbackCommentVideoId()) {
 
   const store = loadLessonCommentStore();
   return Array.isArray(store[cleanVideoId]) ? store[cleanVideoId] : [];
+}
+
+function saveLessonComments(comments, videoId = getFallbackCommentVideoId()) {
+  const cleanVideoId = String(videoId || "").trim();
+  if (!cleanVideoId) {
+    return;
+  }
+
+  const store = loadLessonCommentStore();
+  store[cleanVideoId] = normalizeLessonCommentCollection(comments, cleanVideoId);
+  saveLessonCommentStore(store);
 }
 
 function normalizeWeeklyQuotations(rawQuotations) {
@@ -645,74 +801,562 @@ function renderWeeklyContent() {
   weeklyQuotationsList.append(item);
 }
 
+function syncLessonCommentsFromStore() {
+  lessonStoredComments = loadLessonComments(currentActiveVideo?.id);
+  return lessonStoredComments;
+}
+
+function buildCommentMeta(authorName, createdAt) {
+  const meta = document.createElement("div");
+  meta.className = "comment-meta";
+
+  const author = document.createElement("span");
+  author.className = "comment-author";
+  author.textContent = authorName || "Member";
+
+  const time = document.createElement("span");
+  time.className = "comment-date";
+  time.textContent = formatCommentTime(createdAt);
+
+  meta.append(author, time);
+  return meta;
+}
+
+function buildLessonReplyItem(commentId, reply) {
+  const item = document.createElement("li");
+  item.className = "comment-reply-item";
+  item.dataset.replyId = reply.id;
+
+  const top = document.createElement("div");
+  top.className = "comment-reply-top";
+
+  const meta = document.createElement("span");
+  meta.className = "comment-reply-meta";
+  meta.textContent = `${reply.authorName || "Member"} - ${formatCommentTime(reply.createdAt)}`;
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "comment-reply-delete";
+  deleteButton.type = "button";
+  deleteButton.dataset.commentId = commentId;
+  deleteButton.dataset.replyId = reply.id;
+  deleteButton.textContent = "Delete";
+
+  const text = document.createElement("p");
+  text.className = "comment-reply-text";
+  text.textContent = reply.text;
+
+  const reactorKey = getCurrentReactorKey();
+  const { likedBy, dislikedBy } = normalizeVoteLists(reply.likedBy, reply.dislikedBy);
+  const isLiked = likedBy.includes(reactorKey);
+  const isDisliked = dislikedBy.includes(reactorKey);
+
+  const actions = document.createElement("div");
+  actions.className = "comment-reply-actions";
+
+  const likeButton = document.createElement("button");
+  likeButton.className = "comment-reply-like-btn";
+  if (isLiked) {
+    likeButton.classList.add("active");
+  }
+  likeButton.type = "button";
+  likeButton.dataset.action = "toggle-reply-like";
+  likeButton.dataset.commentId = commentId;
+  likeButton.dataset.replyId = reply.id;
+  likeButton.innerHTML = `
+    <i class="${isLiked ? "fa-solid" : "fa-regular"} fa-heart"></i>
+    <span>${formatCompact(normalizeLikeCount(reply.likeCount, likedBy))}</span>
+  `;
+
+  const dislikeButton = document.createElement("button");
+  dislikeButton.className = "comment-reply-dislike-btn";
+  if (isDisliked) {
+    dislikeButton.classList.add("active");
+  }
+  dislikeButton.type = "button";
+  dislikeButton.dataset.action = "toggle-reply-dislike";
+  dislikeButton.dataset.commentId = commentId;
+  dislikeButton.dataset.replyId = reply.id;
+  dislikeButton.innerHTML = `
+    <i class="${isDisliked ? "fa-solid" : "fa-regular"} fa-thumbs-down"></i>
+    <span>${formatCompact(normalizeDislikeCount(reply.dislikeCount, dislikedBy))}</span>
+  `;
+
+  const replyButton = document.createElement("button");
+  replyButton.className = "comment-reply-reply-btn";
+  replyButton.type = "button";
+  replyButton.dataset.action = "reply-to-reply";
+  replyButton.dataset.commentId = commentId;
+  replyButton.dataset.replyAuthor = String(reply.authorName || "Member");
+  replyButton.innerHTML = `
+    <i class="fa-solid fa-reply"></i>
+    <span>Reply</span>
+  `;
+
+  top.append(meta, deleteButton);
+  actions.append(likeButton, dislikeButton, replyButton);
+  item.append(top, text, actions);
+  return item;
+}
+
+function buildLessonCommentItem(comment) {
+  const item = document.createElement("li");
+  item.dataset.commentId = comment.id;
+
+  const top = document.createElement("div");
+  top.className = "comment-top";
+
+  const meta = buildCommentMeta(comment.authorName, comment.createdAt);
+
+  const topActions = document.createElement("div");
+  topActions.className = "comment-top-actions";
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "comment-delete";
+  deleteButton.type = "button";
+  deleteButton.textContent = "Delete";
+  topActions.append(deleteButton);
+
+  const text = document.createElement("p");
+  text.className = "comment-text";
+  text.textContent = comment.text;
+
+  const reactorKey = getCurrentReactorKey();
+  const { likedBy, dislikedBy } = normalizeVoteLists(comment.likedBy, comment.dislikedBy);
+  const isLiked = likedBy.includes(reactorKey);
+  const isDisliked = dislikedBy.includes(reactorKey);
+
+  const actionRow = document.createElement("div");
+  actionRow.className = "comment-action-row";
+
+  const likeButton = document.createElement("button");
+  likeButton.className = "comment-like-btn";
+  if (isLiked) {
+    likeButton.classList.add("active");
+  }
+  likeButton.type = "button";
+  likeButton.dataset.action = "toggle-comment-like";
+  likeButton.dataset.commentId = comment.id;
+  likeButton.innerHTML = `
+    <i class="${isLiked ? "fa-solid" : "fa-regular"} fa-heart"></i>
+    <span>${formatCompact(normalizeLikeCount(comment.likeCount, likedBy))}</span>
+  `;
+
+  const dislikeButton = document.createElement("button");
+  dislikeButton.className = "comment-dislike-btn";
+  if (isDisliked) {
+    dislikeButton.classList.add("active");
+  }
+  dislikeButton.type = "button";
+  dislikeButton.dataset.action = "toggle-comment-dislike";
+  dislikeButton.dataset.commentId = comment.id;
+  dislikeButton.innerHTML = `
+    <i class="${isDisliked ? "fa-solid" : "fa-regular"} fa-thumbs-down"></i>
+    <span>${formatCompact(normalizeDislikeCount(comment.dislikeCount, dislikedBy))}</span>
+  `;
+
+  const replyToggleButton = document.createElement("button");
+  replyToggleButton.className = "comment-reply-toggle";
+  replyToggleButton.type = "button";
+  replyToggleButton.dataset.action = "toggle-reply-box";
+  replyToggleButton.dataset.commentId = comment.id;
+  replyToggleButton.innerHTML = `
+    <i class="fa-solid fa-reply"></i>
+    <span class="reply-label">Reply</span>
+  `;
+
+  actionRow.append(likeButton, dislikeButton, replyToggleButton);
+
+  const replyForm = document.createElement("div");
+  replyForm.className = "comment-reply-form-wrap";
+
+  const replyInputRow = document.createElement("div");
+  replyInputRow.className = "comment-reply-input-row";
+
+  const replyInput = document.createElement("input");
+  replyInput.className = "comment-reply-input";
+  replyInput.type = "text";
+  replyInput.maxLength = MAX_REPLY_LENGTH;
+  replyInput.placeholder = "Write a reply...";
+
+  const replyPostButton = document.createElement("button");
+  replyPostButton.className = "comment-reply-post";
+  replyPostButton.type = "button";
+  replyPostButton.dataset.action = "post-reply";
+  replyPostButton.dataset.commentId = comment.id;
+  replyPostButton.textContent = "Reply";
+
+  replyInputRow.append(replyInput, replyPostButton);
+  replyForm.append(replyInputRow);
+
+  const replyList = document.createElement("ul");
+  replyList.className = "comment-reply-list";
+  const replies = Array.isArray(comment.replies) ? comment.replies : [];
+  replies.forEach((reply, index) => {
+    const replyItem = buildLessonReplyItem(comment.id, reply);
+    if (index > 0) {
+      replyItem.classList.add("reply-extra");
+    }
+    replyList.append(replyItem);
+  });
+
+  const repliesToggleWrap = document.createElement("div");
+  repliesToggleWrap.className = "comment-replies-toggle-wrap";
+  if (replies.length > 1) {
+    const hiddenCount = replies.length - 1;
+    const toggleButton = document.createElement("button");
+    toggleButton.className = "comment-replies-toggle";
+    toggleButton.type = "button";
+    toggleButton.dataset.action = "toggle-more-replies";
+    toggleButton.dataset.commentId = comment.id;
+    toggleButton.dataset.hiddenCount = String(hiddenCount);
+    toggleButton.innerHTML = `
+      <i class="fa-solid fa-angle-down"></i>
+      <span>View more (${hiddenCount})</span>
+    `;
+    repliesToggleWrap.append(toggleButton);
+  }
+
+  top.append(meta, topActions);
+  item.append(top, text, actionRow, replyForm, replyList, repliesToggleWrap);
+  return item;
+}
+
 function renderLessonComments() {
   if (!lessonCommentsList) {
     return;
   }
 
-  const comments = loadLessonComments(currentActiveVideo?.id);
+  const comments = syncLessonCommentsFromStore();
+  if (lessonCommentsTotalLabel) {
+    lessonCommentsTotalLabel.textContent = `${formatCompact(comments.length)} comments`;
+  }
 
   lessonCommentsList.innerHTML = "";
 
   if (!comments.length) {
     const emptyItem = document.createElement("li");
-    emptyItem.className = "lesson-comments-empty";
+    emptyItem.className = "comment-empty";
     emptyItem.textContent = "No comments added yet for this lesson.";
     lessonCommentsList.append(emptyItem);
     return;
   }
 
   comments.forEach((comment) => {
-    const item = document.createElement("li");
-    item.className = "lesson-comment-item";
-
-    const author = document.createElement("span");
-    author.className = "lesson-comments-author";
-    author.textContent = comment.authorName;
-
-    const time = document.createElement("span");
-    time.className = "lesson-comments-time";
-    time.textContent = formatCommentTime(comment.createdAt);
-
-    const text = document.createElement("p");
-    text.className = "lesson-comments-text";
-    text.textContent = comment.text;
-
-    item.append(author, time, text);
-
-    if (Array.isArray(comment.replies) && comment.replies.length > 0) {
-      const replyList = document.createElement("ul");
-      replyList.className = "lesson-comment-reply-list";
-
-      comment.replies.forEach((reply) => {
-        const replyItem = document.createElement("li");
-        replyItem.className = "lesson-comment-reply-item";
-
-        const replyMeta = document.createElement("div");
-        replyMeta.className = "lesson-comment-reply-meta";
-
-        const replyAuthor = document.createElement("span");
-        replyAuthor.className = "lesson-comment-reply-author";
-        replyAuthor.textContent = reply.authorName;
-
-        const replyTime = document.createElement("span");
-        replyTime.className = "lesson-comment-reply-time";
-        replyTime.textContent = formatCommentTime(reply.createdAt);
-
-        const replyText = document.createElement("p");
-        replyText.className = "lesson-comment-reply-text";
-        replyText.textContent = reply.text;
-
-        replyMeta.append(replyAuthor, replyTime);
-        replyItem.append(replyMeta, replyText);
-        replyList.append(replyItem);
-      });
-
-      item.append(replyList);
-    }
-
-    lessonCommentsList.append(item);
+    lessonCommentsList.append(buildLessonCommentItem(comment));
   });
+}
+
+function insertEmojiIntoLessonComment(emoji) {
+  if (!lessonCommentInput || !emoji) {
+    return;
+  }
+
+  const start = lessonCommentInput.selectionStart ?? lessonCommentInput.value.length;
+  const end = lessonCommentInput.selectionEnd ?? lessonCommentInput.value.length;
+  const before = lessonCommentInput.value.slice(0, start);
+  const after = lessonCommentInput.value.slice(end);
+  const needsSpaceBefore = before.length > 0 && !/\s$/.test(before);
+  const prefix = needsSpaceBefore ? " " : "";
+  const nextValue = `${before}${prefix}${emoji} ${after}`;
+
+  lessonCommentInput.value = nextValue;
+  const caret = before.length + prefix.length + emoji.length + 1;
+  lessonCommentInput.focus();
+  lessonCommentInput.setSelectionRange(caret, caret);
+}
+
+function postLessonComment() {
+  if (!lessonCommentInput || !currentActiveVideo) {
+    return;
+  }
+
+  const text = lessonCommentInput.value.trim();
+  if (!text) {
+    showMessage("Write a comment first.");
+    lessonCommentInput.focus();
+    return;
+  }
+
+  if (text.length > MAX_COMMENT_LENGTH) {
+    showMessage(`Comment is too long. Max ${MAX_COMMENT_LENGTH} characters.`);
+    return;
+  }
+
+  syncLessonCommentsFromStore();
+  lessonStoredComments = [...lessonStoredComments, {
+    id: `c-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    videoId: currentActiveVideo.id,
+    text,
+    authorName: getCurrentUserName(),
+    createdAt: Date.now(),
+    reactions: {},
+    userReactions: {},
+    replies: [],
+    likedBy: [],
+    likeCount: 0,
+    dislikedBy: [],
+    dislikeCount: 0,
+  }].slice(-100);
+
+  saveLessonComments(lessonStoredComments, currentActiveVideo.id);
+  renderLessonComments();
+  lessonCommentInput.value = "";
+  showMessage("Comment posted.");
+}
+
+function postLessonReply(commentId, text) {
+  const cleanText = String(text || "").trim();
+  if (!cleanText) {
+    showMessage("Write a reply first.");
+    return;
+  }
+
+  if (cleanText.length > MAX_REPLY_LENGTH) {
+    showMessage(`Reply is too long. Max ${MAX_REPLY_LENGTH} characters.`);
+    return;
+  }
+
+  syncLessonCommentsFromStore();
+  const targetIndex = lessonStoredComments.findIndex((comment) => comment.id === commentId);
+  if (targetIndex === -1) {
+    return;
+  }
+
+  const target = lessonStoredComments[targetIndex];
+  const nextReplies = [
+    ...(Array.isArray(target.replies) ? target.replies : []),
+    {
+      id: `r-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      text: cleanText,
+      authorName: getCurrentUserName(),
+      createdAt: Date.now(),
+      likedBy: [],
+      likeCount: 0,
+      dislikedBy: [],
+      dislikeCount: 0,
+    },
+  ].slice(-100);
+
+  lessonStoredComments = [
+    ...lessonStoredComments.slice(0, targetIndex),
+    {
+      ...target,
+      replies: nextReplies,
+    },
+    ...lessonStoredComments.slice(targetIndex + 1),
+  ];
+
+  saveLessonComments(lessonStoredComments, currentActiveVideo?.id);
+  renderLessonComments();
+  showMessage("Reply posted.");
+}
+
+function toggleLessonCommentLike(commentId) {
+  syncLessonCommentsFromStore();
+  const targetIndex = lessonStoredComments.findIndex((comment) => comment.id === commentId);
+  if (targetIndex === -1) {
+    return;
+  }
+
+  const reactorKey = getCurrentReactorKey();
+  const target = lessonStoredComments[targetIndex];
+  const { likedBy, dislikedBy } = normalizeVoteLists(target.likedBy, target.dislikedBy);
+  const hasLiked = likedBy.includes(reactorKey);
+  const hasDisliked = dislikedBy.includes(reactorKey);
+
+  if (hasLiked) {
+    showMessage("You already liked this comment.");
+    return;
+  }
+
+  const nextLikedBy = [...likedBy, reactorKey];
+  const nextDislikedBy = dislikedBy.filter((key) => key !== reactorKey);
+
+  lessonStoredComments = [
+    ...lessonStoredComments.slice(0, targetIndex),
+    {
+      ...target,
+      likedBy: nextLikedBy,
+      dislikedBy: nextDislikedBy,
+      likeCount: nextLikedBy.length,
+      dislikeCount: nextDislikedBy.length,
+    },
+    ...lessonStoredComments.slice(targetIndex + 1),
+  ];
+
+  saveLessonComments(lessonStoredComments, currentActiveVideo?.id);
+  renderLessonComments();
+  showMessage(hasDisliked ? "Comment changed to like." : "Comment liked.");
+}
+
+function toggleLessonCommentDislike(commentId) {
+  syncLessonCommentsFromStore();
+  const targetIndex = lessonStoredComments.findIndex((comment) => comment.id === commentId);
+  if (targetIndex === -1) {
+    return;
+  }
+
+  const reactorKey = getCurrentReactorKey();
+  const target = lessonStoredComments[targetIndex];
+  const { likedBy, dislikedBy } = normalizeVoteLists(target.likedBy, target.dislikedBy);
+  const hasLiked = likedBy.includes(reactorKey);
+  const hasDisliked = dislikedBy.includes(reactorKey);
+
+  if (hasDisliked) {
+    showMessage("You already disliked this comment.");
+    return;
+  }
+
+  const nextDislikedBy = [...dislikedBy, reactorKey];
+  const nextLikedBy = likedBy.filter((key) => key !== reactorKey);
+
+  lessonStoredComments = [
+    ...lessonStoredComments.slice(0, targetIndex),
+    {
+      ...target,
+      dislikedBy: nextDislikedBy,
+      likedBy: nextLikedBy,
+      likeCount: nextLikedBy.length,
+      dislikeCount: nextDislikedBy.length,
+    },
+    ...lessonStoredComments.slice(targetIndex + 1),
+  ];
+
+  saveLessonComments(lessonStoredComments, currentActiveVideo?.id);
+  renderLessonComments();
+  showMessage(hasLiked ? "Comment changed to dislike." : "Comment disliked.");
+}
+
+function toggleLessonReplyLike(commentId, replyId) {
+  syncLessonCommentsFromStore();
+  const commentIndex = lessonStoredComments.findIndex((comment) => comment.id === commentId);
+  if (commentIndex === -1) {
+    return;
+  }
+
+  const replies = Array.isArray(lessonStoredComments[commentIndex].replies)
+    ? lessonStoredComments[commentIndex].replies
+    : [];
+  const replyIndex = replies.findIndex((reply) => reply.id === replyId);
+  if (replyIndex === -1) {
+    return;
+  }
+
+  const reactorKey = getCurrentReactorKey();
+  const reply = replies[replyIndex];
+  const { likedBy, dislikedBy } = normalizeVoteLists(reply.likedBy, reply.dislikedBy);
+  const hasLiked = likedBy.includes(reactorKey);
+  const hasDisliked = dislikedBy.includes(reactorKey);
+
+  if (hasLiked) {
+    showMessage("You already liked this reply.");
+    return;
+  }
+
+  const nextLikedBy = [...likedBy, reactorKey];
+  const nextDislikedBy = dislikedBy.filter((key) => key !== reactorKey);
+  const nextReplies = [...replies];
+  nextReplies[replyIndex] = {
+    ...reply,
+    likedBy: nextLikedBy,
+    dislikedBy: nextDislikedBy,
+    likeCount: nextLikedBy.length,
+    dislikeCount: nextDislikedBy.length,
+  };
+
+  lessonStoredComments[commentIndex] = {
+    ...lessonStoredComments[commentIndex],
+    replies: nextReplies,
+  };
+
+  saveLessonComments(lessonStoredComments, currentActiveVideo?.id);
+  renderLessonComments();
+  showMessage(hasDisliked ? "Reply changed to like." : "Reply liked.");
+}
+
+function toggleLessonReplyDislike(commentId, replyId) {
+  syncLessonCommentsFromStore();
+  const commentIndex = lessonStoredComments.findIndex((comment) => comment.id === commentId);
+  if (commentIndex === -1) {
+    return;
+  }
+
+  const replies = Array.isArray(lessonStoredComments[commentIndex].replies)
+    ? lessonStoredComments[commentIndex].replies
+    : [];
+  const replyIndex = replies.findIndex((reply) => reply.id === replyId);
+  if (replyIndex === -1) {
+    return;
+  }
+
+  const reactorKey = getCurrentReactorKey();
+  const reply = replies[replyIndex];
+  const { likedBy, dislikedBy } = normalizeVoteLists(reply.likedBy, reply.dislikedBy);
+  const hasLiked = likedBy.includes(reactorKey);
+  const hasDisliked = dislikedBy.includes(reactorKey);
+
+  if (hasDisliked) {
+    showMessage("You already disliked this reply.");
+    return;
+  }
+
+  const nextDislikedBy = [...dislikedBy, reactorKey];
+  const nextLikedBy = likedBy.filter((key) => key !== reactorKey);
+  const nextReplies = [...replies];
+  nextReplies[replyIndex] = {
+    ...reply,
+    dislikedBy: nextDislikedBy,
+    likedBy: nextLikedBy,
+    likeCount: nextLikedBy.length,
+    dislikeCount: nextDislikedBy.length,
+  };
+
+  lessonStoredComments[commentIndex] = {
+    ...lessonStoredComments[commentIndex],
+    replies: nextReplies,
+  };
+
+  saveLessonComments(lessonStoredComments, currentActiveVideo?.id);
+  renderLessonComments();
+  showMessage(hasLiked ? "Reply changed to dislike." : "Reply disliked.");
+}
+
+function deleteLessonComment(commentId) {
+  syncLessonCommentsFromStore();
+  const nextComments = lessonStoredComments.filter((comment) => comment.id !== commentId);
+  if (nextComments.length === lessonStoredComments.length) {
+    return;
+  }
+
+  lessonStoredComments = nextComments;
+  saveLessonComments(lessonStoredComments, currentActiveVideo?.id);
+  renderLessonComments();
+  showMessage("Comment removed.");
+}
+
+function deleteLessonReply(commentId, replyId) {
+  syncLessonCommentsFromStore();
+  const commentIndex = lessonStoredComments.findIndex((comment) => comment.id === commentId);
+  if (commentIndex === -1) {
+    return;
+  }
+
+  const replies = Array.isArray(lessonStoredComments[commentIndex].replies)
+    ? lessonStoredComments[commentIndex].replies
+    : [];
+  const nextReplies = replies.filter((reply) => reply.id !== replyId);
+  if (nextReplies.length === replies.length) {
+    return;
+  }
+
+  lessonStoredComments[commentIndex] = {
+    ...lessonStoredComments[commentIndex],
+    replies: nextReplies,
+  };
+
+  saveLessonComments(lessonStoredComments, currentActiveVideo?.id);
+  renderLessonComments();
+  showMessage("Reply removed.");
 }
 
 function renderLessonsSection() {
@@ -827,6 +1471,7 @@ function populateLessonViewer(video) {
   }
 
   currentActiveVideo = video;
+  lessonStoredComments = loadLessonComments(video.id);
   renderVideoPlayer(video);
 
   if (videoTitle) {
@@ -900,10 +1545,12 @@ function applyActiveVideo() {
   const activeVideo = videos.find((video) => video.id === savedId) || videos[0];
   if (!activeVideo) {
     currentActiveVideo = null;
+    lessonStoredComments = [];
     renderLessonsSection();
     return;
   }
   currentActiveVideo = activeVideo;
+  lessonStoredComments = loadLessonComments(activeVideo.id);
   renderLessonsSection();
   if (!lessonViewerModal?.hidden) {
     populateLessonViewer(activeVideo);
@@ -941,6 +1588,174 @@ window.addEventListener("scroll", () => {
 
 if (lessonViewerCloseBtn) {
   lessonViewerCloseBtn.addEventListener("click", closeLessonViewer);
+}
+
+if (lessonPostCommentBtn) {
+  lessonPostCommentBtn.addEventListener("click", postLessonComment);
+}
+
+if (lessonCommentInput) {
+  lessonCommentInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      postLessonComment();
+    }
+  });
+}
+
+lessonEmojiButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const emoji = button.dataset.lessonEmoji || "";
+    if (!emoji) {
+      return;
+    }
+
+    insertEmojiIntoLessonComment(emoji);
+    showMessage("Emoji added to your comment.");
+  });
+});
+
+if (lessonCommentsList) {
+  lessonCommentsList.addEventListener("click", (event) => {
+    const toggleReplyButton = event.target.closest("[data-action='toggle-reply-box']");
+    if (toggleReplyButton) {
+      const commentItem = toggleReplyButton.closest("li[data-comment-id]");
+      if (!commentItem) {
+        return;
+      }
+
+      lessonCommentsList.querySelectorAll("li[data-comment-id].show-reply-box").forEach((item) => {
+        if (item !== commentItem) {
+          item.classList.remove("show-reply-box");
+        }
+      });
+
+      commentItem.classList.toggle("show-reply-box");
+      if (commentItem.classList.contains("show-reply-box")) {
+        commentItem.querySelector(".comment-reply-input")?.focus();
+      }
+      return;
+    }
+
+    const postReplyButton = event.target.closest("[data-action='post-reply']");
+    if (postReplyButton) {
+      const commentId = String(postReplyButton.dataset.commentId || "").trim();
+      const commentItem = postReplyButton.closest("li[data-comment-id]");
+      const input = commentItem?.querySelector(".comment-reply-input");
+      postLessonReply(commentId, String(input?.value || ""));
+      return;
+    }
+
+    const toggleMoreRepliesButton = event.target.closest("[data-action='toggle-more-replies']");
+    if (toggleMoreRepliesButton) {
+      const commentItem = toggleMoreRepliesButton.closest("li[data-comment-id]");
+      if (!commentItem) {
+        return;
+      }
+
+      const hiddenCount = Number(toggleMoreRepliesButton.dataset.hiddenCount || "0");
+      const isExpanded = commentItem.classList.toggle("show-all-replies");
+      const label = toggleMoreRepliesButton.querySelector("span");
+      const icon = toggleMoreRepliesButton.querySelector("i");
+      if (label) {
+        label.textContent = isExpanded ? "View less" : `View more (${hiddenCount})`;
+      }
+      if (icon) {
+        icon.classList.toggle("fa-angle-down", !isExpanded);
+        icon.classList.toggle("fa-angle-up", isExpanded);
+      }
+      return;
+    }
+
+    const commentLikeButton = event.target.closest("[data-action='toggle-comment-like']");
+    if (commentLikeButton) {
+      toggleLessonCommentLike(String(commentLikeButton.dataset.commentId || "").trim());
+      return;
+    }
+
+    const commentDislikeButton = event.target.closest("[data-action='toggle-comment-dislike']");
+    if (commentDislikeButton) {
+      toggleLessonCommentDislike(String(commentDislikeButton.dataset.commentId || "").trim());
+      return;
+    }
+
+    const replyLikeButton = event.target.closest("[data-action='toggle-reply-like']");
+    if (replyLikeButton) {
+      toggleLessonReplyLike(
+        String(replyLikeButton.dataset.commentId || "").trim(),
+        String(replyLikeButton.dataset.replyId || "").trim()
+      );
+      return;
+    }
+
+    const replyDislikeButton = event.target.closest("[data-action='toggle-reply-dislike']");
+    if (replyDislikeButton) {
+      toggleLessonReplyDislike(
+        String(replyDislikeButton.dataset.commentId || "").trim(),
+        String(replyDislikeButton.dataset.replyId || "").trim()
+      );
+      return;
+    }
+
+    const replyToReplyButton = event.target.closest("[data-action='reply-to-reply']");
+    if (replyToReplyButton) {
+      const commentId = String(replyToReplyButton.dataset.commentId || "").trim();
+      const replyAuthor = String(replyToReplyButton.dataset.replyAuthor || "Member").trim();
+      const commentItem = Array.from(lessonCommentsList.querySelectorAll("li[data-comment-id]")).find(
+        (item) => String(item.dataset.commentId || "") === commentId
+      );
+      if (!commentItem) {
+        return;
+      }
+
+      lessonCommentsList.querySelectorAll("li[data-comment-id].show-reply-box").forEach((item) => {
+        if (item !== commentItem) {
+          item.classList.remove("show-reply-box");
+        }
+      });
+
+      commentItem.classList.add("show-reply-box");
+      const input = commentItem.querySelector(".comment-reply-input");
+      if (input) {
+        const mentionPrefix = `@${replyAuthor} `;
+        const currentText = String(input.value || "").trim();
+        if (!currentText.startsWith(`@${replyAuthor}`)) {
+          input.value = mentionPrefix;
+        }
+        input.focus();
+        const caret = input.value.length;
+        input.setSelectionRange(caret, caret);
+      }
+      showMessage(`Replying to ${replyAuthor}.`);
+      return;
+    }
+
+    const deleteReplyButton = event.target.closest(".comment-reply-delete");
+    if (deleteReplyButton) {
+      deleteLessonReply(
+        String(deleteReplyButton.dataset.commentId || "").trim(),
+        String(deleteReplyButton.dataset.replyId || "").trim()
+      );
+      return;
+    }
+
+    const deleteCommentButton = event.target.closest(".comment-delete");
+    if (deleteCommentButton) {
+      const commentItem = deleteCommentButton.closest("li[data-comment-id]");
+      deleteLessonComment(String(commentItem?.dataset.commentId || "").trim());
+    }
+  });
+
+  lessonCommentsList.addEventListener("keydown", (event) => {
+    const replyInput = event.target.closest(".comment-reply-input");
+    if (!replyInput || event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    const commentItem = replyInput.closest("li[data-comment-id]");
+    postLessonReply(String(commentItem?.dataset.commentId || "").trim(), replyInput.value);
+  });
 }
 
 if (lessonsVideoToggleBtn) {
