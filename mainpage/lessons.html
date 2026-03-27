@@ -227,26 +227,33 @@
               <h3 id="lesson-comments-total-label">Comments</h3>
             </div>
             <ul id="lesson-comments-list" class="comment-list lesson-comments-list"></ul>
-            <div class="comments-emoji-bar lesson-comments-emoji-bar">
-              <div class="emoji-actions">
-                <button class="emoji-btn" data-lesson-emoji="&#128578;" aria-label="Add smile to lesson comment"><span class="emoji-char">&#128578;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#10084;&#65039;" aria-label="Add love to lesson comment"><span class="emoji-char">&#10084;&#65039;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#128293;" aria-label="Add fire to lesson comment"><span class="emoji-char">&#128293;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#128591;" aria-label="Add prayer to lesson comment"><span class="emoji-char">&#128591;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#128079;" aria-label="Add clap to lesson comment"><span class="emoji-char">&#128079;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#128514;" aria-label="Add joy to lesson comment"><span class="emoji-char">&#128514;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#128588;" aria-label="Add praise to lesson comment"><span class="emoji-char">&#128588;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#128558;" aria-label="Add wow to lesson comment"><span class="emoji-char">&#128558;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#128546;" aria-label="Add compassion to lesson comment"><span class="emoji-char">&#128546;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#127881;" aria-label="Add celebration to lesson comment"><span class="emoji-char">&#127881;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#10004;&#65039;" aria-label="Add amen to lesson comment"><span class="emoji-char">&#10004;&#65039;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#128175;" aria-label="Add hundred to lesson comment"><span class="emoji-char">&#128175;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#10024;" aria-label="Add sparkle to lesson comment"><span class="emoji-char">&#10024;</span></button>
-                <button class="emoji-btn" data-lesson-emoji="&#129309;" aria-label="Add agreement to lesson comment"><span class="emoji-char">&#129309;</span></button>
-              </div>
-            </div>
             <div class="comment-row lesson-comment-row">
-              <input id="lesson-video-comment" class="video-comment lesson-video-comment" type="text" placeholder="Comment or prayer request...">
+              <div class="comment-input-stack">
+                <div class="comment-input-wrap">
+                  <input id="lesson-video-comment" class="video-comment lesson-video-comment" type="text" placeholder="Comment or prayer request...">
+                  <button type="button" class="comment-emoji-toggle" id="lesson-comment-emoji-toggle" aria-label="Choose emoji" aria-expanded="false">
+                    <i class="fa-regular fa-face-smile"></i>
+                  </button>
+                </div>
+                <div class="comments-emoji-bar lesson-comments-emoji-bar" id="lesson-comments-emoji-bar">
+                  <div class="emoji-actions">
+                    <button class="emoji-btn" data-lesson-emoji="&#128578;" aria-label="Add smile to lesson comment"><span class="emoji-char">&#128578;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#10084;&#65039;" aria-label="Add love to lesson comment"><span class="emoji-char">&#10084;&#65039;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#128293;" aria-label="Add fire to lesson comment"><span class="emoji-char">&#128293;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#128591;" aria-label="Add prayer to lesson comment"><span class="emoji-char">&#128591;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#128079;" aria-label="Add clap to lesson comment"><span class="emoji-char">&#128079;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#128514;" aria-label="Add joy to lesson comment"><span class="emoji-char">&#128514;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#128588;" aria-label="Add praise to lesson comment"><span class="emoji-char">&#128588;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#128558;" aria-label="Add wow to lesson comment"><span class="emoji-char">&#128558;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#128546;" aria-label="Add compassion to lesson comment"><span class="emoji-char">&#128546;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#127881;" aria-label="Add celebration to lesson comment"><span class="emoji-char">&#127881;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#10004;&#65039;" aria-label="Add amen to lesson comment"><span class="emoji-char">&#10004;&#65039;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#128175;" aria-label="Add hundred to lesson comment"><span class="emoji-char">&#128175;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#10024;" aria-label="Add sparkle to lesson comment"><span class="emoji-char">&#10024;</span></button>
+                    <button class="emoji-btn" data-lesson-emoji="&#129309;" aria-label="Add agreement to lesson comment"><span class="emoji-char">&#129309;</span></button>
+                  </div>
+                </div>
+              </div>
               <button type="button" id="lesson-post-comment-btn" class="post-comment-btn">Post</button>
             </div>
           </section>

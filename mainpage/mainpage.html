@@ -215,26 +215,33 @@
             </div>
           </div>
           <ul id="comment-list" class="comment-list"></ul>
-          <div class="comments-emoji-bar">
-            <div class="emoji-actions">
-              <button class="emoji-btn" data-emoji="&#128578;" aria-label="Add smile to comment"><span class="emoji-char">&#128578;</span></button>
-              <button class="emoji-btn" data-emoji="&#10084;&#65039;" aria-label="Add love to comment"><span class="emoji-char">&#10084;&#65039;</span></button>
-              <button class="emoji-btn" data-emoji="&#128293;" aria-label="Add fire to comment"><span class="emoji-char">&#128293;</span></button>
-              <button class="emoji-btn" data-emoji="&#128591;" aria-label="Add prayer to comment"><span class="emoji-char">&#128591;</span></button>
-              <button class="emoji-btn" data-emoji="&#128079;" aria-label="Add clap to comment"><span class="emoji-char">&#128079;</span></button>
-              <button class="emoji-btn" data-emoji="&#128514;" aria-label="Add joy to comment"><span class="emoji-char">&#128514;</span></button>
-              <button class="emoji-btn" data-emoji="&#128588;" aria-label="Add praise to comment"><span class="emoji-char">&#128588;</span></button>
-              <button class="emoji-btn" data-emoji="&#128558;" aria-label="Add wow to comment"><span class="emoji-char">&#128558;</span></button>
-              <button class="emoji-btn" data-emoji="&#128546;" aria-label="Add compassion to comment"><span class="emoji-char">&#128546;</span></button>
-              <button class="emoji-btn" data-emoji="&#127881;" aria-label="Add celebration to comment"><span class="emoji-char">&#127881;</span></button>
-              <button class="emoji-btn" data-emoji="&#10004;&#65039;" aria-label="Add amen to comment"><span class="emoji-char">&#10004;&#65039;</span></button>
-              <button class="emoji-btn" data-emoji="&#128175;" aria-label="Add hundred to comment"><span class="emoji-char">&#128175;</span></button>
-              <button class="emoji-btn" data-emoji="&#10024;" aria-label="Add sparkle to comment"><span class="emoji-char">&#10024;</span></button>
-              <button class="emoji-btn" data-emoji="&#129309;" aria-label="Add agreement to comment"><span class="emoji-char">&#129309;</span></button>
-            </div>
-          </div>
           <div class="comment-row">
-            <input id="video-comment" class="video-comment" type="text" placeholder="Comment or prayer request...">
+            <div class="comment-input-stack">
+              <div class="comment-input-wrap">
+                <input id="video-comment" class="video-comment" type="text" placeholder="Comment or prayer request...">
+                <button type="button" class="comment-emoji-toggle" id="comment-emoji-toggle" aria-label="Choose emoji" aria-expanded="false">
+                  <i class="fa-regular fa-face-smile"></i>
+                </button>
+              </div>
+              <div class="comments-emoji-bar" id="comments-emoji-bar">
+                <div class="emoji-actions">
+                  <button class="emoji-btn" data-emoji="&#128578;" aria-label="Add smile to comment"><span class="emoji-char">&#128578;</span></button>
+                  <button class="emoji-btn" data-emoji="&#10084;&#65039;" aria-label="Add love to comment"><span class="emoji-char">&#10084;&#65039;</span></button>
+                  <button class="emoji-btn" data-emoji="&#128293;" aria-label="Add fire to comment"><span class="emoji-char">&#128293;</span></button>
+                  <button class="emoji-btn" data-emoji="&#128591;" aria-label="Add prayer to comment"><span class="emoji-char">&#128591;</span></button>
+                  <button class="emoji-btn" data-emoji="&#128079;" aria-label="Add clap to comment"><span class="emoji-char">&#128079;</span></button>
+                  <button class="emoji-btn" data-emoji="&#128514;" aria-label="Add joy to comment"><span class="emoji-char">&#128514;</span></button>
+                  <button class="emoji-btn" data-emoji="&#128588;" aria-label="Add praise to comment"><span class="emoji-char">&#128588;</span></button>
+                  <button class="emoji-btn" data-emoji="&#128558;" aria-label="Add wow to comment"><span class="emoji-char">&#128558;</span></button>
+                  <button class="emoji-btn" data-emoji="&#128546;" aria-label="Add compassion to comment"><span class="emoji-char">&#128546;</span></button>
+                  <button class="emoji-btn" data-emoji="&#127881;" aria-label="Add celebration to comment"><span class="emoji-char">&#127881;</span></button>
+                  <button class="emoji-btn" data-emoji="&#10004;&#65039;" aria-label="Add amen to comment"><span class="emoji-char">&#10004;&#65039;</span></button>
+                  <button class="emoji-btn" data-emoji="&#128175;" aria-label="Add hundred to comment"><span class="emoji-char">&#128175;</span></button>
+                  <button class="emoji-btn" data-emoji="&#10024;" aria-label="Add sparkle to comment"><span class="emoji-char">&#10024;</span></button>
+                  <button class="emoji-btn" data-emoji="&#129309;" aria-label="Add agreement to comment"><span class="emoji-char">&#129309;</span></button>
+                </div>
+              </div>
+            </div>
             <button type="button" id="post-comment-btn" class="post-comment-btn">Post</button>
           </div>
         </div>

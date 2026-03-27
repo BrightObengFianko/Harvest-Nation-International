@@ -18,8 +18,11 @@ const lessonViewerModal = document.querySelector("#lesson-viewer-modal");
 const lessonViewerCloseBtn = document.querySelector("#lesson-viewer-close-btn");
 const lessonCommentsList = document.querySelector("#lesson-comments-list");
 const lessonCommentsTotalLabel = document.querySelector("#lesson-comments-total-label");
+const lessonCommentsSection = document.querySelector("#lesson-comments-section");
 const lessonCommentInput = document.querySelector("#lesson-video-comment");
 const lessonPostCommentBtn = document.querySelector("#lesson-post-comment-btn");
+const lessonCommentEmojiToggle = document.querySelector("#lesson-comment-emoji-toggle");
+const lessonCommentsEmojiBar = document.querySelector("#lesson-comments-emoji-bar");
 const lessonEmojiButtons = document.querySelectorAll("[data-lesson-emoji]");
 const lessonsUserName = document.querySelector("#lessons-user-name");
 const lessonsLogoutBtn = document.querySelector("#lessons-logout-btn");
@@ -1065,6 +1068,20 @@ function insertEmojiIntoLessonComment(emoji) {
   lessonCommentInput.setSelectionRange(caret, caret);
 }
 
+function canUseCompactLessonEmojiPicker() {
+  return window.matchMedia("(min-width: 701px)").matches;
+}
+
+function setLessonEmojiPickerOpen(isOpen) {
+  if (!lessonCommentsSection || !lessonCommentEmojiToggle) {
+    return;
+  }
+
+  const nextState = Boolean(isOpen) && canUseCompactLessonEmojiPicker();
+  lessonCommentsSection.classList.toggle("show-emoji-picker", nextState);
+  lessonCommentEmojiToggle.setAttribute("aria-expanded", String(nextState));
+}
+
 function postLessonComment() {
   if (!lessonCommentInput || !currentActiveVideo) {
     return;
@@ -1603,6 +1620,20 @@ if (lessonCommentInput) {
   });
 }
 
+if (lessonCommentEmojiToggle) {
+  lessonCommentEmojiToggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!canUseCompactLessonEmojiPicker()) {
+      return;
+    }
+
+    const isOpen = lessonCommentsSection?.classList.contains("show-emoji-picker");
+    setLessonEmojiPickerOpen(!isOpen);
+  });
+}
+
 lessonEmojiButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const emoji = button.dataset.lessonEmoji || "";
@@ -1611,6 +1642,7 @@ lessonEmojiButtons.forEach((button) => {
     }
 
     insertEmojiIntoLessonComment(emoji);
+    setLessonEmojiPickerOpen(false);
     showMessage("Emoji added to your comment.");
   });
 });
@@ -1757,6 +1789,22 @@ if (lessonCommentsList) {
     postLessonReply(String(commentItem?.dataset.commentId || "").trim(), replyInput.value);
   });
 }
+
+document.addEventListener("click", (event) => {
+  if (
+    lessonCommentsSection?.classList.contains("show-emoji-picker") &&
+    !event.target.closest("#lesson-comment-emoji-toggle") &&
+    !event.target.closest("#lesson-comments-emoji-bar")
+  ) {
+    setLessonEmojiPickerOpen(false);
+  }
+});
+
+window.addEventListener("resize", () => {
+  if (!canUseCompactLessonEmojiPicker()) {
+    setLessonEmojiPickerOpen(false);
+  }
+});
 
 if (lessonsVideoToggleBtn) {
   lessonsVideoToggleBtn.addEventListener("click", () => {

@@ -7,10 +7,13 @@ const shareBtn = document.querySelector(".share-btn");
 const likeCount = document.querySelector("#like-count");
 const commentCount = document.querySelector("#comment-count");
 const shareCount = document.querySelector("#share-count");
-const emojiButtons = document.querySelectorAll(".emoji-btn");
+const commentsSection = document.querySelector("#comments-section");
+const emojiButtons = document.querySelectorAll("#comments-section [data-emoji]");
 const chatFloat = document.querySelector("#chat-float");
 const commentInput = document.querySelector("#video-comment");
 const postCommentBtn = document.querySelector("#post-comment-btn");
+const commentEmojiToggle = document.querySelector("#comment-emoji-toggle");
+const commentsEmojiBar = document.querySelector("#comments-emoji-bar");
 const commentList = document.querySelector("#comment-list");
 const commentsScrollControls = document.querySelector("#comments-scroll-controls");
 const commentScrollUpBtn = document.querySelector("#comment-scroll-up");
@@ -968,6 +971,20 @@ function insertEmojiIntoComment(emoji) {
   commentInput.setSelectionRange(caret, caret);
 }
 
+function canUseCompactCommentEmojiPicker() {
+  return window.matchMedia("(min-width: 701px)").matches;
+}
+
+function setCommentEmojiPickerOpen(isOpen) {
+  if (!commentsSection || !commentEmojiToggle) {
+    return;
+  }
+
+  const nextState = Boolean(isOpen) && canUseCompactCommentEmojiPicker();
+  commentsSection.classList.toggle("show-emoji-picker", nextState);
+  commentEmojiToggle.setAttribute("aria-expanded", String(nextState));
+}
+
 function getVideoShareUrl() {
   if (!currentActiveVideo || !String(currentActiveVideo.url || "").trim()) {
     return window.location.href;
@@ -1913,6 +1930,20 @@ if (commentInput) {
   });
 }
 
+if (commentEmojiToggle) {
+  commentEmojiToggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!canUseCompactCommentEmojiPicker()) {
+      return;
+    }
+
+    const isOpen = commentsSection?.classList.contains("show-emoji-picker");
+    setCommentEmojiPickerOpen(!isOpen);
+  });
+}
+
 if (commentList) {
   commentList.addEventListener("scroll", updateCommentScrollControls);
 
@@ -2134,17 +2165,27 @@ if (commentScrollDownBtn && commentList) {
 }
 
 document.addEventListener("click", (event) => {
-  if (!commentList || !commentList.querySelector("li.show-inline-reaction-picker")) {
-    return;
+  if (commentList && commentList.querySelector("li.show-inline-reaction-picker")) {
+    if (!event.target.closest("#comment-list")) {
+      commentList.querySelectorAll("li.show-inline-reaction-picker").forEach((item) => {
+        item.classList.remove("show-inline-reaction-picker");
+      });
+    }
   }
 
-  if (event.target.closest("#comment-list")) {
-    return;
+  if (
+    commentsSection?.classList.contains("show-emoji-picker") &&
+    !event.target.closest("#comment-emoji-toggle") &&
+    !event.target.closest("#comments-emoji-bar")
+  ) {
+    setCommentEmojiPickerOpen(false);
   }
+});
 
-  commentList.querySelectorAll("li.show-inline-reaction-picker").forEach((item) => {
-    item.classList.remove("show-inline-reaction-picker");
-  });
+window.addEventListener("resize", () => {
+  if (!canUseCompactCommentEmojiPicker()) {
+    setCommentEmojiPickerOpen(false);
+  }
 });
 
 window.addEventListener("storage", (event) => {
@@ -2169,6 +2210,7 @@ emojiButtons.forEach((button) => {
     const emoji = button.dataset.emoji || "";
     if (emoji && commentInput) {
       insertEmojiIntoComment(emoji);
+      setCommentEmojiPickerOpen(false);
       showMessage("Emoji added to your comment.");
       return;
     }

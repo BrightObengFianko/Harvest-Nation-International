@@ -1056,7 +1056,7 @@ a {
   font: inherit;
   margin: 0;
   outline: none;
-  padding: 11px 16px;
+  padding: 11px 52px 11px 16px;
   width: 100%;
 }
 
@@ -1139,6 +1139,16 @@ a {
   background: transparent;
 }
 
+.comment-input-stack {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.comment-input-wrap {
+  position: relative;
+}
+
 .post-comment-btn {
   background: var(--brand-gradient);
   border: 0;
@@ -1163,12 +1173,59 @@ a {
 }
 
 .comments-emoji-bar {
-  border-top: 1px solid var(--line);
-  padding: 12px 0 0;
+  background: #ffffff;
+  border: 1px solid #cad8ee;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(15, 31, 60, 0.14);
+  bottom: calc(100% + 12px);
+  opacity: 0;
+  padding: 10px;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  width: min(320px, calc(100vw - 96px));
+  z-index: 24;
 }
 
 .comments-emoji-bar .emoji-actions {
   grid-template-columns: repeat(7, max-content);
+  justify-content: start;
+}
+
+.comments-panel.show-emoji-picker .comments-emoji-bar {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.comment-emoji-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #4f6f9f;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 1.08rem;
+  height: 36px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: color 0.2s ease, transform 0.2s ease;
+  width: 36px;
+}
+
+.comment-emoji-toggle:hover {
+  color: #2563eb;
+  transform: translateY(-50%) scale(1.04);
+}
+
+.comments-panel.show-emoji-picker .comment-emoji-toggle {
+  color: #2563eb;
 }
 
 .comment-list {
@@ -2280,6 +2337,37 @@ a {
   .comment-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .comment-input-stack {
+    position: static;
+  }
+
+  .comment-input-wrap {
+    width: 100%;
+  }
+
+  .comment-emoji-toggle {
+    display: none;
+  }
+
+  .video-comment {
+    padding-right: 16px;
+  }
+
+  .comments-emoji-bar {
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    bottom: auto;
+    box-shadow: none;
+    opacity: 1;
+    padding: 12px 0 0;
+    pointer-events: auto;
+    position: static;
+    transform: none;
+    width: 100%;
   }
 
   .comment-reply-input-row {
