@@ -2365,27 +2365,13 @@ a {
     width: 100%;
   }
 
-  .comment-emoji-toggle {
-    display: none;
+  .comment-emoji-toggle,
+  .comments-emoji-bar {
+    display: none !important;
   }
 
   .video-comment {
     padding-right: 16px;
-  }
-
-  .comments-emoji-bar {
-    background: transparent;
-    border: 0;
-    border-top: 1px solid var(--line);
-    border-radius: 0;
-    bottom: auto;
-    box-shadow: none;
-    opacity: 1;
-    padding: 12px 0 0;
-    pointer-events: auto;
-    position: static;
-    transform: none;
-    width: 100%;
   }
 
   .comment-reply-input-row {
