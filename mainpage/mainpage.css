@@ -1918,8 +1918,20 @@ a {
   .navbar {
     gap: 10px;
     left: 12px;
-    padding: 10px 12px;
+    padding: 10px 52px 10px 12px;
     right: 12px;
+  }
+
+  .brand {
+    max-width: calc(100% - 52px);
+  }
+
+  .menu-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
   }
 
   .brand-logo {
@@ -1980,7 +1992,16 @@ a {
     border-radius: 12px;
     left: 10px;
     right: 10px;
+    padding-right: 48px;
     top: 10px;
+  }
+
+  .brand {
+    max-width: calc(100% - 48px);
+  }
+
+  .menu-toggle {
+    right: 10px;
   }
 
   .hero {
