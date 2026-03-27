@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: harvest-nation-international
+    name: harvest-nation-international-bright-obeng-fianko
     env: node
     plan: free
     buildCommand: npm install
