@@ -916,6 +916,8 @@ function applyVideoSelection(video) {
   }
 
   currentActiveVideo = video;
+  storedComments = loadComments(video.id);
+  showAllComments = false;
   renderVideoPlayer(video);
   updateDownloadOptionAvailability();
 
@@ -930,6 +932,7 @@ function applyVideoSelection(video) {
   }
 
   renderWeeklyContent();
+  renderComments();
 }
 
 function applyActiveVideo() {
@@ -938,7 +941,9 @@ function applyActiveVideo() {
   const activeVideo = videos.find((video) => video.id === savedId) || videos[0];
   if (!activeVideo) {
     currentActiveVideo = null;
+    storedComments = [];
     renderWeeklyContent();
+    renderComments();
     return;
   }
   applyVideoSelection(activeVideo);
@@ -1016,45 +1021,133 @@ function getCommentBaseCount() {
   return Number(commentCount.dataset.base || "0");
 }
 
-function loadComments() {
-  try {
-    const raw = window.localStorage.getItem(COMMENTS_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed
-      .filter((item) => item && typeof item.text === "string" && item.text.trim())
-      .map((item) => {
-        const { likedBy, dislikedBy } = normalizeVoteLists(item.likedBy, item.dislikedBy);
-        return {
-          id: typeof item.id === "string" ? item.id : `c-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          text: item.text.trim().slice(0, MAX_COMMENT_LENGTH),
-          authorName: getCommentAuthorName(item),
-          createdAt: normalizeCommentTimestamp(item.createdAt),
-          reactions: normalizeReactionMap(item.reactions),
-          userReactions: normalizeUserReactions(item.userReactions),
-          replies: normalizeReplyList(item.replies),
-          likedBy,
-          likeCount: normalizeLikeCount(item.likeCount ?? item.likes, likedBy),
-          dislikedBy,
-          dislikeCount: normalizeDislikeCount(item.dislikeCount ?? item.dislikes, dislikedBy),
-        };
-      })
-      .sort((a, b) => a.createdAt - b.createdAt);
-  } catch {
-    return [];
+function getFallbackCommentVideoId() {
+  if (currentActiveVideo?.id) {
+    return currentActiveVideo.id;
   }
+
+  const videos = loadVideos();
+  const savedId = String(window.localStorage.getItem(ACTIVE_VIDEO_KEY) || "").trim();
+  if (savedId && videos.some((video) => video.id === savedId)) {
+    return savedId;
+  }
+
+  return videos[0]?.id || "";
 }
 
-function saveComments(comments) {
+function normalizeCommentCollection(rawItems, videoId = "") {
+  if (!Array.isArray(rawItems)) {
+    return [];
+  }
+
+  return rawItems
+    .filter((item) => item && typeof item.text === "string" && item.text.trim())
+    .map((item) => {
+      const { likedBy, dislikedBy } = normalizeVoteLists(item.likedBy, item.dislikedBy);
+      return {
+        id: typeof item.id === "string" ? item.id : `c-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        videoId: String(item.videoId || videoId || "").trim(),
+        text: item.text.trim().slice(0, MAX_COMMENT_LENGTH),
+        authorName: getCommentAuthorName(item),
+        createdAt: normalizeCommentTimestamp(item.createdAt),
+        reactions: normalizeReactionMap(item.reactions),
+        userReactions: normalizeUserReactions(item.userReactions),
+        replies: normalizeReplyList(item.replies),
+        likedBy,
+        likeCount: normalizeLikeCount(item.likeCount ?? item.likes, likedBy),
+        dislikedBy,
+        dislikeCount: normalizeDislikeCount(item.dislikeCount ?? item.dislikes, dislikedBy),
+      };
+    })
+    .sort((a, b) => a.createdAt - b.createdAt);
+}
+
+function saveCommentStore(store) {
   try {
-    window.localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(comments));
+    window.localStorage.setItem(
+      COMMENTS_STORAGE_KEY,
+      JSON.stringify({
+        byVideo: store,
+      })
+    );
   } catch {
     // Ignore storage failures (private mode, quota, etc.).
   }
+}
+
+function normalizeCommentStore(rawValue) {
+  if (Array.isArray(rawValue)) {
+    const fallbackVideoId = getFallbackCommentVideoId();
+    if (!fallbackVideoId) {
+      return {};
+    }
+
+    return {
+      [fallbackVideoId]: normalizeCommentCollection(rawValue, fallbackVideoId),
+    };
+  }
+
+  if (!rawValue || typeof rawValue !== "object") {
+    return {};
+  }
+
+  const source =
+    rawValue.byVideo && typeof rawValue.byVideo === "object" && !Array.isArray(rawValue.byVideo)
+      ? rawValue.byVideo
+      : rawValue;
+
+  return Object.entries(source).reduce((acc, [videoId, items]) => {
+    const cleanVideoId = String(videoId || "").trim();
+    if (!cleanVideoId) {
+      return acc;
+    }
+
+    acc[cleanVideoId] = normalizeCommentCollection(items, cleanVideoId);
+    return acc;
+  }, {});
+}
+
+function loadCommentStore() {
+  try {
+    const raw = window.localStorage.getItem(COMMENTS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const normalized = normalizeCommentStore(parsed);
+    const shouldRewrite =
+      !raw ||
+      Array.isArray(parsed) ||
+      !parsed ||
+      typeof parsed !== "object" ||
+      !parsed.byVideo;
+
+    if (shouldRewrite) {
+      saveCommentStore(normalized);
+    }
+
+    return normalized;
+  } catch {
+    return {};
+  }
+}
+
+function loadComments(videoId = getFallbackCommentVideoId()) {
+  const cleanVideoId = String(videoId || "").trim();
+  if (!cleanVideoId) {
+    return [];
+  }
+
+  const store = loadCommentStore();
+  return Array.isArray(store[cleanVideoId]) ? store[cleanVideoId] : [];
+}
+
+function saveComments(comments, videoId = getFallbackCommentVideoId()) {
+  const cleanVideoId = String(videoId || "").trim();
+  if (!cleanVideoId) {
+    return;
+  }
+
+  const store = loadCommentStore();
+  store[cleanVideoId] = normalizeCommentCollection(comments, cleanVideoId);
+  saveCommentStore(store);
 }
 
 function formatCommentTime(createdAt) {
@@ -2062,6 +2155,12 @@ window.addEventListener("storage", (event) => {
 
   if (event.key === VIDEO_STORAGE_KEY || event.key === ACTIVE_VIDEO_KEY) {
     applyActiveVideo();
+    return;
+  }
+
+  if (event.key === COMMENTS_STORAGE_KEY) {
+    storedComments = loadComments();
+    renderComments();
   }
 });
 
@@ -2166,7 +2265,6 @@ window.addEventListener("resize", () => {
   window.requestAnimationFrame(updateCommentScrollControls);
 });
 
-renderWeeklyContent();
-renderComments();
 applyActiveVideo();
+renderWeeklyContent();
 window.requestAnimationFrame(syncSidebarHeightToVideo);

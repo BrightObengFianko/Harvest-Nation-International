@@ -214,28 +214,113 @@ function normalizeLessonReplies(rawReplies) {
     .filter((item) => item.text);
 }
 
-function loadLessonComments() {
-  try {
-    const raw = window.localStorage.getItem(COMMENTS_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
+function getFallbackCommentVideoId() {
+  if (currentActiveVideo?.id) {
+    return currentActiveVideo.id;
+  }
 
-    return parsed
-      .filter((item) => item && typeof item.text === "string" && item.text.trim())
-      .map((item) => ({
-        id: String(item.id || `lesson-comment-${Date.now()}-${Math.random().toString(16).slice(2)}`),
-        videoId: String(item.videoId || "").trim(),
-        authorName: getCommentAuthorName(item),
-        text: cleanWeeklyText(item.text, 240),
-        createdAt: normalizeCommentTimestamp(item.createdAt),
-        replies: normalizeLessonReplies(item.replies),
-      }))
-      .filter((item) => item.text);
-  } catch {
+  const videos = loadVideos();
+  const savedId = String(window.localStorage.getItem(ACTIVE_VIDEO_KEY) || "").trim();
+  if (savedId && videos.some((video) => video.id === savedId)) {
+    return savedId;
+  }
+
+  return videos[0]?.id || "";
+}
+
+function normalizeLessonCommentCollection(rawItems, videoId = "") {
+  if (!Array.isArray(rawItems)) {
     return [];
   }
+
+  return rawItems
+    .filter((item) => item && typeof item.text === "string" && item.text.trim())
+    .map((item) => ({
+      id: String(item.id || `lesson-comment-${Date.now()}-${Math.random().toString(16).slice(2)}`),
+      videoId: String(item.videoId || videoId || "").trim(),
+      authorName: getCommentAuthorName(item),
+      text: cleanWeeklyText(item.text, 240),
+      createdAt: normalizeCommentTimestamp(item.createdAt),
+      replies: normalizeLessonReplies(item.replies),
+    }))
+    .filter((item) => item.text);
+}
+
+function saveLessonCommentStore(store) {
+  try {
+    window.localStorage.setItem(
+      COMMENTS_STORAGE_KEY,
+      JSON.stringify({
+        byVideo: store,
+      })
+    );
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function normalizeLessonCommentStore(rawValue) {
+  if (Array.isArray(rawValue)) {
+    const fallbackVideoId = getFallbackCommentVideoId();
+    if (!fallbackVideoId) {
+      return {};
+    }
+
+    return {
+      [fallbackVideoId]: normalizeLessonCommentCollection(rawValue, fallbackVideoId),
+    };
+  }
+
+  if (!rawValue || typeof rawValue !== "object") {
+    return {};
+  }
+
+  const source =
+    rawValue.byVideo && typeof rawValue.byVideo === "object" && !Array.isArray(rawValue.byVideo)
+      ? rawValue.byVideo
+      : rawValue;
+
+  return Object.entries(source).reduce((acc, [videoId, items]) => {
+    const cleanVideoId = String(videoId || "").trim();
+    if (!cleanVideoId) {
+      return acc;
+    }
+
+    acc[cleanVideoId] = normalizeLessonCommentCollection(items, cleanVideoId);
+    return acc;
+  }, {});
+}
+
+function loadLessonCommentStore() {
+  try {
+    const raw = window.localStorage.getItem(COMMENTS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const normalized = normalizeLessonCommentStore(parsed);
+    const shouldRewrite =
+      !raw ||
+      Array.isArray(parsed) ||
+      !parsed ||
+      typeof parsed !== "object" ||
+      !parsed.byVideo;
+
+    if (shouldRewrite) {
+      saveLessonCommentStore(normalized);
+    }
+
+    return normalized;
+  } catch {
+    return {};
+  }
+}
+
+function loadLessonComments(videoId = getFallbackCommentVideoId()) {
+  const cleanVideoId = String(videoId || "").trim();
+  if (!cleanVideoId) {
+    return [];
+  }
+
+  const store = loadLessonCommentStore();
+  return Array.isArray(store[cleanVideoId]) ? store[cleanVideoId] : [];
 }
 
 function normalizeWeeklyQuotations(rawQuotations) {
@@ -565,11 +650,7 @@ function renderLessonComments() {
     return;
   }
 
-  const allComments = loadLessonComments();
-  const hasBoundComments = allComments.some((comment) => comment.videoId);
-  const comments = hasBoundComments && currentActiveVideo
-    ? allComments.filter((comment) => comment.videoId === currentActiveVideo.id)
-    : allComments;
+  const comments = loadLessonComments(currentActiveVideo?.id);
 
   lessonCommentsList.innerHTML = "";
 
