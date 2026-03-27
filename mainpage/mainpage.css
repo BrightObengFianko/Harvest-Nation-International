@@ -1980,6 +1980,44 @@ a {
     width: 100%;
   }
 
+  .mobile-account-toggle-main {
+    align-items: center;
+    display: inline-flex;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .mobile-account-toggle-avatar {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    height: 32px;
+    overflow: hidden;
+    position: relative;
+    width: 32px;
+  }
+
+  .mobile-account-toggle-image {
+    height: 100%;
+    inset: 0;
+    object-fit: cover;
+    position: absolute;
+    width: 100%;
+  }
+
+  .mobile-account-toggle-icon {
+    color: #ffffff;
+    font-size: 1rem;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .mobile-account-toggle-label {
+    min-width: 0;
+  }
+
   .mobile-account-toggle-caret {
     font-size: 0.84rem;
     transition: transform 0.2s ease;

@@ -3,10 +3,6 @@
   transform: translateY(0);
 }
 
-.lessons-auth {
-  gap: 10px;
-}
-
 .lesson-user-chip {
   background: rgba(255, 255, 255, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -389,11 +385,6 @@
 }
 
 @media (max-width: 900px) {
-  .lessons-auth {
-    justify-content: flex-end;
-    width: 100%;
-  }
-
   .lesson-user-chip {
     max-width: 170px;
   }
@@ -409,12 +400,6 @@
 }
 
 @media (max-width: 700px) {
-  .lessons-auth {
-    display: grid;
-    gap: 8px;
-    grid-template-columns: 1fr;
-  }
-
   .lesson-user-chip {
     max-width: 100%;
     text-align: center;

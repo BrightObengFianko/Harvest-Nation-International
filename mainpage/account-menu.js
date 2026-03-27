@@ -20,6 +20,8 @@
   const accountLogoutNo = document.querySelector("#account-logout-no");
   const mobileAuthLinks = document.querySelector("#mobile-auth-links");
   const mobileAccountToggle = document.querySelector("#mobile-account-toggle");
+  const mobileAccountToggleImage = document.querySelector("#mobile-account-toggle-image");
+  const mobileAccountToggleIcon = document.querySelector("#mobile-account-toggle-icon");
   const mobileAccountPanel = document.querySelector("#mobile-account-panel");
   const mobileAccountName = document.querySelector("#mobile-account-name");
   const mobileAccountEmail = document.querySelector("#mobile-account-email");
@@ -192,6 +194,13 @@
       accountToggleImage.src = profileImage;
       accountToggleImage.hidden = false;
       accountToggleIcon.hidden = true;
+      if (mobileAccountToggleImage) {
+        mobileAccountToggleImage.src = profileImage;
+        mobileAccountToggleImage.hidden = false;
+      }
+      if (mobileAccountToggleIcon) {
+        mobileAccountToggleIcon.hidden = true;
+      }
       if (mobileAccountAvatarImage) {
         mobileAccountAvatarImage.src = profileImage;
         mobileAccountAvatarImage.hidden = false;
@@ -208,6 +217,13 @@
     accountToggleImage.removeAttribute("src");
     accountToggleImage.hidden = true;
     accountToggleIcon.hidden = false;
+    if (mobileAccountToggleImage) {
+      mobileAccountToggleImage.removeAttribute("src");
+      mobileAccountToggleImage.hidden = true;
+    }
+    if (mobileAccountToggleIcon) {
+      mobileAccountToggleIcon.hidden = false;
+    }
     if (mobileAccountAvatarImage) {
       mobileAccountAvatarImage.removeAttribute("src");
       mobileAccountAvatarImage.hidden = true;

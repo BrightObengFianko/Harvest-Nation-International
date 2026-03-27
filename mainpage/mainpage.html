@@ -23,7 +23,13 @@
 
     <nav class="site-nav" id="site-nav" aria-label="Main navigation">
       <button type="button" class="mobile-account-toggle" id="mobile-account-toggle" hidden aria-expanded="false" aria-controls="mobile-account-panel">
-        <span>Account</span>
+        <span class="mobile-account-toggle-main">
+          <span class="mobile-account-toggle-avatar" aria-hidden="true">
+            <img class="mobile-account-toggle-image" id="mobile-account-toggle-image" alt="Account profile image" hidden>
+            <i class="fa-regular fa-user mobile-account-toggle-icon" id="mobile-account-toggle-icon"></i>
+          </span>
+          <span class="mobile-account-toggle-label">Account</span>
+        </span>
         <i class="fa-solid fa-angle-down mobile-account-toggle-caret" aria-hidden="true"></i>
       </button>
       <section class="mobile-account-panel" id="mobile-account-panel" hidden aria-label="Mobile account details">
