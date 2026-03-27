@@ -2104,6 +2104,19 @@ a {
     width: 100%;
   }
 
+  .comment-input-stack {
+    position: static;
+  }
+
+  .comment-emoji-toggle,
+  .comments-emoji-bar {
+    display: none !important;
+  }
+
+  .video-comment {
+    padding-right: 16px;
+  }
+
   .mobile-account-panel {
     background: rgba(241, 247, 255, 0.1);
     border: 1px solid rgba(216, 231, 255, 0.18);
