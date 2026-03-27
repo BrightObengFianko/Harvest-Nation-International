@@ -704,12 +704,22 @@ td {
   }
 
   .topbar {
+    align-items: flex-start;
     border-radius: 12px;
     padding: 12px;
   }
 
+  .brand {
+    min-width: 0;
+  }
+
+  .brand > div {
+    min-width: 0;
+  }
+
   .topbar h1 {
     font-size: 1.2rem;
+    overflow-wrap: anywhere;
   }
 
   .card {
@@ -717,8 +727,17 @@ td {
     padding: 12px;
   }
 
+  .card-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .table-wrap {
+    overflow: visible;
   }
 
   table {
@@ -752,7 +771,7 @@ td {
     border-bottom: 1px solid #dbe5f5;
     display: grid;
     gap: 8px;
-    grid-template-columns: 110px 1fr;
+    grid-template-columns: 92px minmax(0, 1fr);
     min-height: 34px;
     padding: 8px 4px;
   }
@@ -780,8 +799,9 @@ td {
   }
 
   .action-row {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .weekly-quote-item {
@@ -789,11 +809,28 @@ td {
   }
 
   .weekly-actions {
-    justify-content: stretch;
+    justify-content: flex-start;
   }
 
   .btn {
-    width: 100%;
+    width: fit-content;
+  }
+
+  .admin-auth-actions,
+  .confirm-actions,
+  .video-pager {
+    align-items: flex-start;
+  }
+
+  .user-search .btn,
+  .video-form .btn,
+  .action-row .btn,
+  .weekly-actions .btn,
+  .video-pager .btn,
+  .admin-auth-actions .btn,
+  .confirm-actions .btn,
+  .back-btn {
+    width: fit-content;
   }
 
   .confirm-actions {
@@ -826,8 +863,11 @@ td {
   }
 
   .back-btn {
-    width: 100%;
     text-align: center;
+  }
+
+  tbody tr td {
+    grid-template-columns: 78px minmax(0, 1fr);
   }
 
   .user-search input,

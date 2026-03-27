@@ -393,8 +393,11 @@ button:hover {
   }
 
   button {
+    display: inline-flex;
     font-size: 0.9rem;
+    justify-content: center;
     padding: 11px 12px;
+    width: fit-content;
   }
 
   .login-footer,

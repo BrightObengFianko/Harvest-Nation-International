@@ -413,3 +413,19 @@
   }
 
 }
+
+@media (max-width: 560px) {
+  .lessons-head,
+  .lessons-videos-head,
+  .lessons-video-actions,
+  .lessons-video-search {
+    align-items: flex-start;
+  }
+
+  .lessons-head-drive-link,
+  .lessons-video-search-btn,
+  .lessons-video-toggle {
+    justify-content: center;
+    width: fit-content;
+  }
+}

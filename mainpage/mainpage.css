@@ -2018,7 +2018,13 @@ a {
   }
 
   .site-nav {
-    align-items: stretch;
+    align-items: flex-start;
+  }
+
+  .site-nav a {
+    display: inline-flex;
+    max-width: 100%;
+    width: fit-content;
   }
 
   .mobile-auth-links[hidden],
@@ -2095,6 +2101,7 @@ a {
     border-top: 1px solid rgba(233, 243, 255, 0.16);
     display: grid;
     gap: 8px;
+    justify-items: start;
     margin-top: 6px;
     padding-top: 12px;
   }
@@ -2325,8 +2332,17 @@ a {
   }
 
   .hero-actions .btn {
+    justify-content: center;
+    width: fit-content;
+  }
+
+  .mobile-auth-links {
+    justify-items: start;
+  }
+
+  .mobile-auth-links .btn {
     text-align: center;
-    width: 100%;
+    width: fit-content;
   }
 
   .card-header {
@@ -2379,15 +2395,15 @@ a {
   }
 
   .comment-reply-react-toggle {
-    width: 100%;
+    width: fit-content;
   }
 
   .comment-reply-post {
-    width: 100%;
+    width: fit-content;
   }
 
   .post-comment-btn {
-    width: 100%;
+    width: fit-content;
   }
 
   .comment-list {
@@ -2399,12 +2415,12 @@ a {
   }
 
   .footer-links {
-    justify-content: stretch;
+    justify-content: flex-start;
   }
 
   .footer-link {
     justify-content: center;
-    width: 100%;
+    width: fit-content;
   }
 
   .lessons-videos-block {
@@ -2417,17 +2433,17 @@ a {
   }
 
   .lessons-video-play {
-    justify-self: stretch;
-    width: 100%;
+    justify-self: start;
+    width: fit-content;
   }
 
   .lessons-more-link-wrap {
-    justify-content: stretch;
+    justify-content: flex-start;
   }
 
   .lessons-more-link {
     justify-content: center;
-    width: 100%;
+    width: fit-content;
   }
 }
 

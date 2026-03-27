@@ -235,3 +235,13 @@
     width: 100%;
   }
 }
+
+@media (max-width: 560px) {
+  .donation-actions {
+    align-items: flex-start;
+  }
+
+  .donation-actions .btn {
+    width: fit-content;
+  }
+}
