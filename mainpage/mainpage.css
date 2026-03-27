@@ -393,6 +393,7 @@ a {
   position: absolute;
   right: 12px;
   top: 12px;
+  z-index: 3;
 }
 
 .account-menu-card {
@@ -2133,6 +2134,8 @@ a {
     display: flex;
     flex-direction: column;
     gap: 3px;
+    position: relative;
+    z-index: 2;
   }
 
   .mobile-account-signout-btn {

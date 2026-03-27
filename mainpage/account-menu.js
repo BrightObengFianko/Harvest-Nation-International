@@ -335,13 +335,17 @@
   }
 
   if (accountSignoutBtn) {
-    accountSignoutBtn.addEventListener("click", () => {
+    accountSignoutBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       showLogoutConfirm("desktop");
     });
   }
 
   if (mobileAccountSignoutBtn) {
-    mobileAccountSignoutBtn.addEventListener("click", () => {
+    mobileAccountSignoutBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       showLogoutConfirm("mobile");
     });
   }
@@ -355,20 +359,29 @@
   }
 
   if (accountLogoutNo) {
-    accountLogoutNo.addEventListener("click", () => {
+    accountLogoutNo.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       hideLogoutConfirm();
     });
   }
 
   if (mobileAccountLogoutNo) {
-    mobileAccountLogoutNo.addEventListener("click", () => {
+    mobileAccountLogoutNo.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       hideLogoutConfirm();
     });
   }
 
-  function performLogout() {
+  function performLogout(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     window.localStorage.removeItem(CURRENT_USER_KEY);
     closeAccountMenu();
+    closeMobileAccountPanel();
     renderAccountState();
     window.location.assign(buildLoginUrl());
   }
