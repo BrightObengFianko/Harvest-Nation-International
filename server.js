@@ -16,6 +16,11 @@ try {
 
 const PORT = Number(process.env.PORT) || 3000;
 const app = express();
+const OWNER_ADMIN_EMAIL = String(
+  process.env.OWNER_ADMIN_EMAIL || "brightobengfianko@gmail.com"
+)
+  .trim()
+  .toLowerCase();
 
 const APP_STORAGE_DIR = process.env.APP_STORAGE_DIR
   ? path.resolve(process.env.APP_STORAGE_DIR)
@@ -128,6 +133,45 @@ function all(sql, params = []) {
       resolve(rows);
     });
   });
+}
+
+function isOwnerAdminEmail(email) {
+  return String(email || "").trim().toLowerCase() === OWNER_ADMIN_EMAIL;
+}
+
+async function promoteOwnerAdminIfNeeded(user) {
+  if (!user || !isOwnerAdminEmail(user.email) || Number(user.is_admin) === 1) {
+    return user;
+  }
+
+  await run("UPDATE users SET is_admin = 1 WHERE id = ?", [user.id]);
+  return { ...user, is_admin: 1 };
+}
+
+async function ensureConfiguredOwnerAdmin() {
+  if (!OWNER_ADMIN_EMAIL) {
+    return;
+  }
+
+  try {
+    const owner = await get("SELECT id, email, is_admin FROM users WHERE lower(email) = lower(?)", [
+      OWNER_ADMIN_EMAIL,
+    ]);
+
+    if (!owner) {
+      console.log(
+        `Owner admin email configured (${OWNER_ADMIN_EMAIL}). Account will become admin automatically after signup.`
+      );
+      return;
+    }
+
+    if (Number(owner.is_admin) !== 1) {
+      await run("UPDATE users SET is_admin = 1 WHERE id = ?", [owner.id]);
+      console.log(`Owner admin promoted: ${OWNER_ADMIN_EMAIL}`);
+    }
+  } catch (error) {
+    console.error("Failed to ensure configured owner admin:", error.message);
+  }
 }
 
 function toAdminFlag(value) {
@@ -1064,9 +1108,10 @@ app.post("/api/auth/signup", async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const isAdmin = isOwnerAdminEmail(email) ? 1 : 0;
     const result = await run(
-      "INSERT INTO users (fullname, email, password_hash) VALUES (?, ?, ?)",
-      [fullname, email, passwordHash]
+      "INSERT INTO users (fullname, email, password_hash, is_admin) VALUES (?, ?, ?, ?)",
+      [fullname, email, passwordHash, isAdmin]
     );
 
     res.status(201).json({
@@ -1076,7 +1121,7 @@ app.post("/api/auth/signup", async (req, res) => {
         id: result.lastID,
         fullname,
         email,
-        is_admin: false,
+        is_admin: isAdmin === 1,
       },
     });
   } catch (error) {
@@ -1094,7 +1139,7 @@ app.post("/api/auth/admin/login", async (req, res) => {
   }
 
   try {
-    const user = await get(
+    let user = await get(
       "SELECT id, fullname, email, password_hash, is_admin FROM users WHERE email = ?",
       [identifier]
     );
@@ -1109,6 +1154,8 @@ app.post("/api/auth/admin/login", async (req, res) => {
       res.status(401).json({ ok: false, message: "Invalid email or password." });
       return;
     }
+
+    user = await promoteOwnerAdminIfNeeded(user);
 
     if (Number(user.is_admin) !== 1) {
       res.status(403).json({ ok: false, message: "Access denied. Admin account required." });
@@ -1142,7 +1189,7 @@ app.post("/api/auth/login", async (req, res) => {
   }
 
   try {
-    const user = await get(
+    let user = await get(
       "SELECT id, fullname, email, password_hash, is_admin FROM users WHERE email = ?",
       [identifier]
     );
@@ -1157,6 +1204,8 @@ app.post("/api/auth/login", async (req, res) => {
       res.status(401).json({ ok: false, message: "Invalid email or password." });
       return;
     }
+
+    user = await promoteOwnerAdminIfNeeded(user);
 
     await run("INSERT INTO login_events (user_id) VALUES (?)", [user.id]);
 
@@ -1174,6 +1223,8 @@ app.post("/api/auth/login", async (req, res) => {
     res.status(500).json({ ok: false, message: "Server error while logging in." });
   }
 });
+
+ensureConfiguredOwnerAdmin();
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Auth server running on http://0.0.0.0:${PORT}`);

@@ -10,3 +10,5 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: OWNER_ADMIN_EMAIL
+        value: brightobengfianko@gmail.com
