@@ -1734,6 +1734,10 @@ a {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.chat-float-badge {
+  display: none;
+}
+
 .chat-float-label {
   color: #e8f2ff;
   font-family: "Oswald", sans-serif;
@@ -2171,6 +2175,30 @@ a {
     font-size: 1.28rem;
     height: 54px;
     width: 54px;
+  }
+
+  .chat-float-badge[hidden] {
+    display: none !important;
+  }
+
+  .chat-float-badge {
+    align-items: center;
+    background: var(--accent-red);
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+    color: #ffffff;
+    display: inline-flex;
+    font-family: "Source Sans 3", sans-serif;
+    font-size: 0.66rem;
+    font-weight: 700;
+    height: 19px;
+    justify-content: center;
+    left: -3px;
+    min-width: 19px;
+    padding: 0 4px;
+    position: absolute;
+    top: -4px;
+    z-index: 2;
   }
 
   .chat-float-label {

@@ -10,6 +10,7 @@
   const notificationList = document.querySelector("#notification-list");
   const notificationEmpty = document.querySelector("#notification-empty");
   const notificationBadge = document.querySelector("#notification-badge");
+  const chatFloatBadge = document.querySelector("#chat-float-badge");
 
   if (!notificationShell || !notificationToggle || !notificationMenu || !notificationList) {
     return;
@@ -281,6 +282,10 @@
     const unreadCount = getUnreadCount();
     notificationBadge.hidden = unreadCount <= 0;
     notificationBadge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+    if (chatFloatBadge) {
+      chatFloatBadge.hidden = unreadCount <= 0;
+      chatFloatBadge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+    }
   }
 
   function updateEmptyState(message = "") {
