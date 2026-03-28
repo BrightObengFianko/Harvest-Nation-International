@@ -627,7 +627,6 @@ app.get("/api/chat/users", async (req, res) => {
             OR lower(u.email) LIKE ? ESCAPE '\\'
           )
           GROUP BY u.id, u.fullname, u.email, u.is_admin, u.created_at
-          HAVING COUNT(le.id) > 0 OR u.id = ?
           ORDER BY
             CASE WHEN last_login IS NULL THEN 1 ELSE 0 END ASC,
             last_login DESC,
@@ -635,7 +634,7 @@ app.get("/api/chat/users", async (req, res) => {
             lower(u.email) ASC
           LIMIT ?
           `,
-          [safeQueryPattern, safeQueryPattern, currentUserId, limit]
+          [safeQueryPattern, safeQueryPattern, limit]
         )
       : await all(
           `
@@ -650,7 +649,6 @@ app.get("/api/chat/users", async (req, res) => {
           FROM users u
           LEFT JOIN login_events le ON le.user_id = u.id
           GROUP BY u.id, u.fullname, u.email, u.is_admin, u.created_at
-          HAVING COUNT(le.id) > 0 OR u.id = ?
           ORDER BY
             CASE WHEN last_login IS NULL THEN 1 ELSE 0 END ASC,
             last_login DESC,
@@ -658,7 +656,7 @@ app.get("/api/chat/users", async (req, res) => {
             lower(u.email) ASC
           LIMIT ?
           `,
-          [currentUserId, limit]
+          [limit]
         );
 
     res.json({
