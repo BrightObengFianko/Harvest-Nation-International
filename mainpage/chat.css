@@ -645,11 +645,22 @@ body.chat-page-body {
 
   .chat-shell {
     border-radius: 16px;
-    min-height: calc(100vh - 120px);
+    height: calc(100dvh - 120px);
+    min-height: calc(100dvh - 120px);
+  }
+
+  .chat-users-panel {
+    max-height: none;
+    min-height: calc(100dvh - 120px);
+    overflow: hidden;
   }
 
   body.chat-page-body:not(.chat-mobile-thread-open) .chat-thread-panel {
     display: none;
+  }
+
+  body.chat-page-body:not(.chat-mobile-thread-open) .chat-users-panel {
+    display: flex;
   }
 
   body.chat-page-body.chat-mobile-thread-open .chat-users-panel {
@@ -658,7 +669,7 @@ body.chat-page-body {
 
   body.chat-page-body.chat-mobile-thread-open .chat-thread-panel {
     display: flex;
-    min-height: calc(100vh - 120px);
+    min-height: calc(100dvh - 120px);
   }
 
   .chat-users-head {
@@ -676,7 +687,11 @@ body.chat-page-body {
   }
 
   .chat-user-list {
-    padding: 8px 10px 10px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 8px 10px calc(18px + env(safe-area-inset-bottom, 0px));
   }
 
   .chat-user-item button {
