@@ -374,6 +374,7 @@ function saveCurrentUser(user) {
       fullname: user.fullname,
       email: user.email,
       is_admin: true,
+      auth_token: user.auth_token || user.token || "",
     })
   );
 }

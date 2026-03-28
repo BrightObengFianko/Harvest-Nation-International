@@ -241,6 +241,11 @@ function getCurrentUserRecord() {
   }
 }
 
+function getStoredAuthToken() {
+  const currentUser = activeSessionUser || getCurrentUserRecord();
+  return String(currentUser?.auth_token || currentUser?.token || "").trim();
+}
+
 function isValidSignedInUser(user) {
   if (!user || typeof user !== "object") {
     return false;
@@ -508,10 +513,18 @@ function enforceAuth() {
 
 async function apiRequest(path, options = {}) {
   let lastError = null;
+  const authToken = getStoredAuthToken();
 
   for (const apiBase of API_BASE_CANDIDATES) {
     try {
-      const response = await fetch(`${apiBase}${path}`, options);
+      const nextOptions = { ...options };
+      const headers = new Headers(options.headers || {});
+      if (authToken) {
+        headers.set("Authorization", `Bearer ${authToken}`);
+        headers.set("X-HNI-Auth-Token", authToken);
+      }
+      nextOptions.headers = headers;
+      const response = await fetch(`${apiBase}${path}`, nextOptions);
       let data = {};
       try {
         data = await response.json();
@@ -537,18 +550,9 @@ async function apiRequest(path, options = {}) {
 }
 
 async function resolveSessionUser(storedUser) {
-  const params = new URLSearchParams();
-  const userId = parsePositiveInteger(storedUser?.id);
-  const email = String(storedUser?.email || "").trim();
-
-  if (userId) {
-    params.set("userId", String(userId));
-  }
-  if (email) {
-    params.set("email", email);
-  }
-  if (!params.toString()) {
-    return { ok: false, message: "No valid account information found for chat." };
+  const authToken = String(storedUser?.auth_token || storedUser?.token || "").trim();
+  if (!authToken) {
+    return { ok: false, message: "Your login session is missing. Please login again." };
   }
 
   const syncStoredUser = (serverUser) => {
@@ -561,6 +565,7 @@ async function resolveSessionUser(storedUser) {
           fullname: serverUser.fullname,
           email: serverUser.email,
           is_admin: serverUser.is_admin,
+          auth_token: serverUser.auth_token || authToken,
         })
       );
     } catch {
@@ -568,7 +573,7 @@ async function resolveSessionUser(storedUser) {
     }
   };
 
-  const result = await apiRequest(`/chat/session-user?${params.toString()}`);
+  const result = await apiRequest("/chat/session-user");
   if (result.ok && result.data?.user) {
     syncStoredUser(result.data.user);
     return result;
@@ -899,7 +904,6 @@ async function fetchUsers(options = {}) {
   const query = String(options.query || "").trim();
   const limit = parsePositiveInteger(options.limit) || USER_SEARCH_RESULTS_LIMIT;
   const params = new URLSearchParams();
-  params.set("currentUserId", String(activeSessionUser.id));
   params.set("limit", String(limit));
   if (query) {
     params.set("q", query);
@@ -917,7 +921,6 @@ async function fetchMessages() {
   }
 
   const params = new URLSearchParams();
-  params.set("currentUserId", String(activeSessionUser.id));
   params.set("scope", activeChannel.scope);
   params.set("limit", "220");
   if (activeChannel.scope === "direct" && activeChannel.peerUserId) {
@@ -1071,7 +1074,6 @@ async function sendMessage(content) {
   }
 
   const payload = {
-    senderUserId: activeSessionUser.id,
     scope: activeChannel.scope,
     content,
   };

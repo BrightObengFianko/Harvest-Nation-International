@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const sqlite3 = require("sqlite3").verbose();
 const fs = require("fs");
 const path = require("path");
@@ -21,6 +22,9 @@ const OWNER_ADMIN_EMAIL = String(
 )
   .trim()
   .toLowerCase();
+const AUTH_TOKEN_SECRET = String(
+  process.env.AUTH_TOKEN_SECRET || "hni-chat-secret-bright-obeng-fianko"
+);
 
 const APP_STORAGE_DIR = process.env.APP_STORAGE_DIR
   ? path.resolve(process.env.APP_STORAGE_DIR)
@@ -133,6 +137,102 @@ function all(sql, params = []) {
       resolve(rows);
     });
   });
+}
+
+function toBase64Url(value) {
+  return Buffer.from(String(value || ""), "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function fromBase64Url(value) {
+  const normalized = String(value || "")
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+  const padding = normalized.length % 4 === 0 ? "" : "=".repeat(4 - (normalized.length % 4));
+  return Buffer.from(`${normalized}${padding}`, "base64").toString("utf8");
+}
+
+function createAuthToken(user) {
+  const payload = {
+    id: Number(user?.id) || 0,
+    email: String(user?.email || "").trim().toLowerCase(),
+    issued_at: new Date().toISOString(),
+  };
+  const encodedPayload = toBase64Url(JSON.stringify(payload));
+  const signature = crypto
+    .createHmac("sha256", AUTH_TOKEN_SECRET)
+    .update(encodedPayload)
+    .digest("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+  return `${encodedPayload}.${signature}`;
+}
+
+function readAuthTokenFromRequest(req) {
+  const authorization = String(req.headers?.authorization || "").trim();
+  if (/^bearer\s+/i.test(authorization)) {
+    return authorization.replace(/^bearer\s+/i, "").trim();
+  }
+  return String(req.headers?.["x-hni-auth-token"] || "").trim();
+}
+
+function verifyAuthToken(token) {
+  const rawToken = String(token || "").trim();
+  if (!rawToken || !rawToken.includes(".")) {
+    return null;
+  }
+
+  const [encodedPayload, signature = ""] = rawToken.split(".");
+  const expectedSignature = crypto
+    .createHmac("sha256", AUTH_TOKEN_SECRET)
+    .update(encodedPayload)
+    .digest("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+
+  if (signature !== expectedSignature) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(fromBase64Url(encodedPayload));
+    const userId = Number(payload?.id) || 0;
+    const email = String(payload?.email || "").trim().toLowerCase();
+    if (!userId || !email) {
+      return null;
+    }
+    return { id: userId, email };
+  } catch {
+    return null;
+  }
+}
+
+async function requireAuthenticatedUser(req, res) {
+  const token = readAuthTokenFromRequest(req);
+  const session = verifyAuthToken(token);
+  if (!session) {
+    res.status(401).json({ ok: false, message: "Login required." });
+    return null;
+  }
+
+  const user = await get("SELECT id, fullname, email, is_admin FROM users WHERE id = ?", [session.id]);
+  if (!user || String(user.email || "").trim().toLowerCase() !== session.email) {
+    res.status(401).json({ ok: false, message: "Login session is invalid." });
+    return null;
+  }
+
+  return {
+    id: user.id,
+    fullname: user.fullname,
+    email: user.email,
+    is_admin: Number(user.is_admin) === 1,
+    auth_token: token,
+  };
 }
 
 function isOwnerAdminEmail(email) {
@@ -487,26 +587,9 @@ app.get("/api/media/download", async (req, res) => {
 });
 
 app.get("/api/chat/session-user", async (req, res) => {
-  const requestedUserId = parsePositiveInteger(req.query?.userId);
-  const requestedEmail = String(req.query?.email || "").trim().toLowerCase();
-
-  if (!requestedUserId && !requestedEmail) {
-    res.status(400).json({ ok: false, message: "Provide userId or email." });
-    return;
-  }
-
   try {
-    let user = null;
-    if (requestedUserId) {
-      user = await get("SELECT id, fullname, email, is_admin FROM users WHERE id = ?", [requestedUserId]);
-    }
-
-    if (!user && requestedEmail) {
-      user = await get("SELECT id, fullname, email, is_admin FROM users WHERE lower(email) = lower(?)", [requestedEmail]);
-    }
-
+    const user = await requireAuthenticatedUser(req, res);
     if (!user) {
-      res.status(404).json({ ok: false, message: "User account not found on server." });
       return;
     }
 
@@ -517,6 +600,7 @@ app.get("/api/chat/session-user", async (req, res) => {
         fullname: user.fullname,
         email: user.email,
         is_admin: Number(user.is_admin) === 1,
+        auth_token: user.auth_token,
       },
     });
   } catch (error) {
@@ -588,20 +672,15 @@ app.post("/api/chat/session-user/ensure", async (req, res) => {
 });
 
 app.get("/api/chat/users", async (req, res) => {
-  const currentUserId = parsePositiveInteger(req.query?.currentUserId);
   const query = String(req.query?.q || "").trim().toLowerCase();
   const requestedLimit = parsePositiveInteger(req.query?.limit);
-  if (!currentUserId) {
-    res.status(400).json({ ok: false, message: "Invalid currentUserId." });
-    return;
-  }
 
   try {
-    const currentUser = await get("SELECT id FROM users WHERE id = ?", [currentUserId]);
+    const currentUser = await requireAuthenticatedUser(req, res);
     if (!currentUser) {
-      res.status(404).json({ ok: false, message: "Current user not found." });
       return;
     }
+    const currentUserId = Number(currentUser.id);
 
     const hasQuery = Boolean(query);
     const maxLimit = 1000;
@@ -754,15 +833,9 @@ app.get("/api/chat/users", async (req, res) => {
 });
 
 app.get("/api/chat/messages", async (req, res) => {
-  const currentUserId = parsePositiveInteger(req.query?.currentUserId);
   const scope = normalizeChatScope(req.query?.scope || "direct");
   const requestedLimit = parsePositiveInteger(req.query?.limit);
   const limit = Math.min(Math.max(requestedLimit || 120, 1), 300);
-
-  if (!currentUserId) {
-    res.status(400).json({ ok: false, message: "Invalid currentUserId." });
-    return;
-  }
 
   if (!scope) {
     res.status(400).json({ ok: false, message: "scope must be 'all' or 'direct'." });
@@ -770,11 +843,11 @@ app.get("/api/chat/messages", async (req, res) => {
   }
 
   try {
-    const currentUser = await get("SELECT id FROM users WHERE id = ?", [currentUserId]);
+    const currentUser = await requireAuthenticatedUser(req, res);
     if (!currentUser) {
-      res.status(404).json({ ok: false, message: "Current user not found." });
       return;
     }
+    const currentUserId = Number(currentUser.id);
 
     if (scope === "all") {
       const rows = await all(
@@ -863,21 +936,15 @@ app.get("/api/chat/messages", async (req, res) => {
 });
 
 app.get("/api/chat/notifications", async (req, res) => {
-  const currentUserId = parsePositiveInteger(req.query?.currentUserId);
   const requestedLimit = parsePositiveInteger(req.query?.limit);
   const limit = Math.min(Math.max(requestedLimit || 20, 1), 100);
 
-  if (!currentUserId) {
-    res.status(400).json({ ok: false, message: "Invalid currentUserId." });
-    return;
-  }
-
   try {
-    const currentUser = await get("SELECT id FROM users WHERE id = ?", [currentUserId]);
+    const currentUser = await requireAuthenticatedUser(req, res);
     if (!currentUser) {
-      res.status(404).json({ ok: false, message: "Current user not found." });
       return;
     }
+    const currentUserId = Number(currentUser.id);
 
     const rows = await all(
       `
@@ -925,14 +992,8 @@ app.get("/api/chat/notifications", async (req, res) => {
 });
 
 app.post("/api/chat/messages", async (req, res) => {
-  const senderUserId = parsePositiveInteger(req.body?.senderUserId);
   const scope = normalizeChatScope(req.body?.scope || "direct");
   const content = normalizeChatContent(req.body?.content);
-
-  if (!senderUserId) {
-    res.status(400).json({ ok: false, message: "Invalid senderUserId." });
-    return;
-  }
 
   if (!scope) {
     res.status(400).json({ ok: false, message: "scope must be 'all' or 'direct'." });
@@ -950,11 +1011,11 @@ app.post("/api/chat/messages", async (req, res) => {
   }
 
   try {
-    const sender = await get("SELECT id, fullname, email FROM users WHERE id = ?", [senderUserId]);
+    const sender = await requireAuthenticatedUser(req, res);
     if (!sender) {
-      res.status(404).json({ ok: false, message: "Sender not found." });
       return;
     }
+    const senderUserId = Number(sender.id);
 
     let recipientUserId = null;
     if (scope === "direct") {
@@ -1198,6 +1259,10 @@ app.post("/api/auth/signup", async (req, res) => {
         fullname,
         email,
         is_admin: isAdmin === 1,
+        auth_token: createAuthToken({
+          id: result.lastID,
+          email,
+        }),
       },
     });
   } catch (error) {
@@ -1243,6 +1308,7 @@ app.post("/api/auth/reset-password", async (req, res) => {
         fullname: updatedUser.fullname,
         email: updatedUser.email,
         is_admin: Number(updatedUser.is_admin) === 1,
+        auth_token: createAuthToken(updatedUser),
       },
     });
   } catch (error) {
@@ -1293,6 +1359,7 @@ app.post("/api/auth/admin/login", async (req, res) => {
         fullname: user.fullname,
         email: user.email,
         is_admin: true,
+        auth_token: createAuthToken(user),
       },
     });
   } catch (error) {
@@ -1338,6 +1405,7 @@ app.post("/api/auth/login", async (req, res) => {
         fullname: user.fullname,
         email: user.email,
         is_admin: Number(user.is_admin) === 1,
+        auth_token: createAuthToken(user),
       },
     });
   } catch (error) {

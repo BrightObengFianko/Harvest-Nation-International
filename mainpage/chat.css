@@ -502,7 +502,7 @@ body.chat-page-body {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 7px;
+  gap: 4px;
   min-height: 0;
   overflow-y: auto;
   padding: 12px 12px 6px;
@@ -527,7 +527,7 @@ body.chat-page-body {
 .chat-message {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 1px;
   max-width: min(500px, 90%);
 }
 
@@ -583,9 +583,19 @@ body.chat-page-body {
   max-width: 100%;
   min-height: 44px;
   outline: none;
+  overflow-y: auto;
   padding: 9px 10px;
   resize: vertical;
   width: 100%;
+}
+
+#chat-message-input::-webkit-scrollbar {
+  width: 7px;
+}
+
+#chat-message-input::-webkit-scrollbar-thumb {
+  background: #c3d0e8;
+  border-radius: 999px;
 }
 
 #chat-message-input::placeholder {
@@ -999,7 +1009,7 @@ body.chat-page-body {
   }
 
   .chat-thread {
-    gap: 6px;
+    gap: 4px;
     padding: 10px 10px 6px;
   }
 
