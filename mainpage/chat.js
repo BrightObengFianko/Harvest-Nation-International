@@ -17,6 +17,7 @@ const chatSendBtn = document.querySelector("#chat-send-btn");
 const liveMessage = document.querySelector("#chat-live-message");
 
 const CURRENT_USER_KEY = "hni_current_user";
+const ACCOUNT_PROFILE_STORAGE_KEY = "hni_account_profiles_v1";
 const CHAT_NOTIFICATION_SEEN_KEY = "hni_chat_notification_seen_v1";
 const POLL_MESSAGES_MS = 4000;
 const POLL_USERS_MS = 20000;
@@ -92,6 +93,25 @@ function formatDateTime(value) {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function formatConversationTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+  return sameDay
+    ? date.toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      });
 }
 
 function setServerStatus(label, isOnline) {
@@ -242,6 +262,45 @@ function getDisplayName(user) {
   return String(user?.email || "").trim() || "Member";
 }
 
+function getProfileStorage() {
+  try {
+    const raw = window.localStorage.getItem(ACCOUNT_PROFILE_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function getProfileKey(user) {
+  const email = String(user?.email || "").trim().toLowerCase();
+  if (email) {
+    return email;
+  }
+  return String(user?.id || "").trim();
+}
+
+function getUserProfileImage(user) {
+  const storage = getProfileStorage();
+  const key = getProfileKey(user);
+  return key ? String(storage[key] || "").trim() : "";
+}
+
+function getUserInitials(user) {
+  const name = getDisplayName(user);
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) {
+    return "U";
+  }
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  return `${parts[0][0] || ""}${parts[1][0] || ""}`.toUpperCase();
+}
+
 function getNotificationSeenStorage() {
   try {
     const raw = window.localStorage.getItem(CHAT_NOTIFICATION_SEEN_KEY);
@@ -304,14 +363,20 @@ function getUserSearchTokens(user) {
 }
 
 function mergeUniqueUsers(sourceUsers) {
-  const seen = new Set(availableUsers.map((user) => Number(user.id)));
   sourceUsers.forEach((user) => {
     const id = Number(user?.id);
-    if (!Number.isInteger(id) || id <= 0 || seen.has(id)) {
+    if (!Number.isInteger(id) || id <= 0) {
+      return;
+    }
+    const existingIndex = availableUsers.findIndex((entry) => Number(entry?.id) === id);
+    if (existingIndex >= 0) {
+      availableUsers[existingIndex] = {
+        ...availableUsers[existingIndex],
+        ...user,
+      };
       return;
     }
     availableUsers.push(user);
-    seen.add(id);
   });
 }
 
@@ -509,7 +574,33 @@ function updateThreadHeader() {
   chatThreadSubtitle.textContent = "Pick a chat on the left to begin.";
 }
 
-function buildConversationItem({ label, sublabel, tagLabel, iconClass, scope, peerUserId, active, disabled = false }) {
+function getConversationPreview(user) {
+  const preview = String(user?.last_message_text || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (preview) {
+    const fromMe = Number(user?.last_message_sender_user_id) === Number(activeSessionUser?.id);
+    return fromMe ? `You: ${preview}` : preview;
+  }
+  if (Number(user?.id) === Number(activeSessionUser?.id)) {
+    return "Your account";
+  }
+  return String(user?.email || "").trim() || "Start a conversation";
+}
+
+function buildConversationItem({
+  label,
+  sublabel,
+  iconClass,
+  scope,
+  peerUserId,
+  active,
+  disabled = false,
+  avatarUrl = "",
+  avatarInitials = "",
+  timeLabel = "",
+  badgeCount = 0,
+}) {
   const item = document.createElement("li");
   item.className = "chat-user-item";
   if (active) {
@@ -527,6 +618,25 @@ function buildConversationItem({ label, sublabel, tagLabel, iconClass, scope, pe
   }
   button.disabled = Boolean(disabled);
 
+  const avatar = document.createElement("span");
+  avatar.className = "chat-user-avatar";
+  if (avatarUrl) {
+    const avatarImage = document.createElement("img");
+    avatarImage.alt = `${label} profile`;
+    avatarImage.src = avatarUrl;
+    avatar.append(avatarImage);
+  } else if (iconClass) {
+    const icon = document.createElement("i");
+    icon.className = iconClass;
+    icon.setAttribute("aria-hidden", "true");
+    avatar.append(icon);
+  } else {
+    const initials = document.createElement("span");
+    initials.className = "chat-user-avatar-fallback";
+    initials.textContent = avatarInitials || "U";
+    avatar.append(initials);
+  }
+
   const main = document.createElement("div");
   main.className = "chat-user-main";
 
@@ -537,15 +647,22 @@ function buildConversationItem({ label, sublabel, tagLabel, iconClass, scope, pe
 
   main.append(title, meta);
 
-  const tag = document.createElement("span");
-  tag.className = "chat-user-tag";
-  tag.textContent = tagLabel;
+  const side = document.createElement("div");
+  side.className = "chat-user-side";
+  if (timeLabel) {
+    const time = document.createElement("span");
+    time.className = "chat-user-time";
+    time.textContent = timeLabel;
+    side.append(time);
+  }
+  if (badgeCount > 0 && !disabled) {
+    const count = document.createElement("span");
+    count.className = "chat-user-count";
+    count.textContent = badgeCount > 99 ? "99+" : String(badgeCount);
+    side.append(count);
+  }
 
-  const icon = document.createElement("i");
-  icon.className = iconClass;
-  icon.setAttribute("aria-hidden", "true");
-
-  button.append(icon, main, tag);
+  button.append(avatar, main, side);
   item.append(button);
   return item;
 }
@@ -566,7 +683,6 @@ function renderUserList() {
       buildConversationItem({
         label: "All Users Room",
         sublabel: "Broadcast to everyone who has logged in",
-        tagLabel: "All",
         iconClass: "fa-solid fa-bullhorn",
         scope: "all",
         active: activeChannel.scope === "all",
@@ -591,13 +707,17 @@ function renderUserList() {
   filteredUsers.forEach((user) => {
     const isSelf = Number(user.id) === Number(activeSessionUser?.id);
     const label = getDisplayName(user);
-    const email = String(user.email || "").trim() || "No email";
+    const preview = getConversationPreview(user);
+    const timeLabel = formatConversationTime(user.last_message_at || user.last_login || user.created_at);
     chatUserList.append(
       buildConversationItem({
         label,
-        sublabel: email,
-        tagLabel: isSelf ? "You" : user.is_admin ? "Admin" : "User",
-        iconClass: isSelf ? "fa-solid fa-user-check" : "fa-solid fa-user",
+        sublabel: preview,
+        iconClass: isSelf ? "fa-solid fa-user-check" : "",
+        avatarUrl: getUserProfileImage(user),
+        avatarInitials: getUserInitials(user),
+        timeLabel,
+        badgeCount: Number(user.incoming_message_count) || 0,
         scope: "direct",
         peerUserId: user.id,
         active: !isSelf && activeChannel.scope === "direct" && Number(activeChannel.peerUserId) === Number(user.id),
@@ -607,6 +727,33 @@ function renderUserList() {
   });
 
   setUserEmptyState(chatUserList.children.length === 0);
+}
+
+function syncDirectConversationSummary(messages) {
+  if (
+    activeChannel.scope !== "direct" ||
+    !activeChannel.peerUserId ||
+    !Array.isArray(messages) ||
+    messages.length === 0
+  ) {
+    return;
+  }
+
+  const lastMessage = messages[messages.length - 1];
+  const peerUserId = Number(activeChannel.peerUserId);
+  const userIndex = availableUsers.findIndex((user) => Number(user?.id) === peerUserId);
+  if (userIndex < 0) {
+    return;
+  }
+
+  availableUsers[userIndex] = {
+    ...availableUsers[userIndex],
+    last_message_text: String(lastMessage?.content || "").trim(),
+    last_message_at: lastMessage?.created_at || null,
+    last_message_sender_user_id: Number(lastMessage?.sender?.id) || null,
+  };
+  lastActivePeer = availableUsers[userIndex];
+  renderUserList();
 }
 
 function isNearBottom() {
@@ -805,6 +952,8 @@ async function refreshMessages(forceScroll = false) {
     renderMessages(messages);
     lastRenderedSignature = signature;
   }
+
+  syncDirectConversationSummary(messages);
 
   if (canStickToBottom) {
     scrollThreadToBottom();

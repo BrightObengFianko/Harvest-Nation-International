@@ -609,6 +609,52 @@ app.get("/api/chat/users", async (req, res) => {
     const limit = Math.min(Math.max(requestedLimit || defaultLimit, 1), maxLimit);
     const safeQueryPattern = `%${escapeSqlLike(query)}%`;
 
+    const directSummarySelect = `
+            (
+              SELECT dm.message_text
+              FROM chat_messages dm
+              WHERE dm.chat_scope = 'direct'
+                AND (
+                  (dm.sender_user_id = ? AND dm.recipient_user_id = u.id)
+                  OR
+                  (dm.sender_user_id = u.id AND dm.recipient_user_id = ?)
+                )
+              ORDER BY dm.created_at DESC, dm.id DESC
+              LIMIT 1
+            ) AS last_message_text,
+            (
+              SELECT dm.created_at
+              FROM chat_messages dm
+              WHERE dm.chat_scope = 'direct'
+                AND (
+                  (dm.sender_user_id = ? AND dm.recipient_user_id = u.id)
+                  OR
+                  (dm.sender_user_id = u.id AND dm.recipient_user_id = ?)
+                )
+              ORDER BY dm.created_at DESC, dm.id DESC
+              LIMIT 1
+            ) AS last_message_at,
+            (
+              SELECT dm.sender_user_id
+              FROM chat_messages dm
+              WHERE dm.chat_scope = 'direct'
+                AND (
+                  (dm.sender_user_id = ? AND dm.recipient_user_id = u.id)
+                  OR
+                  (dm.sender_user_id = u.id AND dm.recipient_user_id = ?)
+                )
+              ORDER BY dm.created_at DESC, dm.id DESC
+              LIMIT 1
+            ) AS last_message_sender_user_id,
+            (
+              SELECT COUNT(*)
+              FROM chat_messages dm
+              WHERE dm.chat_scope = 'direct'
+                AND dm.sender_user_id = u.id
+                AND dm.recipient_user_id = ?
+            ) AS incoming_message_count
+    `;
+
     const users = hasQuery
       ? await all(
           `
@@ -619,7 +665,8 @@ app.get("/api/chat/users", async (req, res) => {
             u.is_admin,
             u.created_at,
             COUNT(le.id) AS total_logins,
-            MAX(le.logged_in_at) AS last_login
+            MAX(le.logged_in_at) AS last_login,
+            ${directSummarySelect}
           FROM users u
           LEFT JOIN login_events le ON le.user_id = u.id
           WHERE (
@@ -628,13 +675,26 @@ app.get("/api/chat/users", async (req, res) => {
           )
           GROUP BY u.id, u.fullname, u.email, u.is_admin, u.created_at
           ORDER BY
+            CASE WHEN last_message_at IS NULL THEN 1 ELSE 0 END ASC,
+            last_message_at DESC,
             CASE WHEN last_login IS NULL THEN 1 ELSE 0 END ASC,
             last_login DESC,
             CASE WHEN trim(u.fullname) = '' THEN lower(u.email) ELSE lower(u.fullname) END ASC,
             lower(u.email) ASC
           LIMIT ?
           `,
-          [safeQueryPattern, safeQueryPattern, limit]
+          [
+            currentUserId,
+            currentUserId,
+            currentUserId,
+            currentUserId,
+            currentUserId,
+            currentUserId,
+            currentUserId,
+            safeQueryPattern,
+            safeQueryPattern,
+            limit,
+          ]
         )
       : await all(
           `
@@ -645,18 +705,30 @@ app.get("/api/chat/users", async (req, res) => {
             u.is_admin,
             u.created_at,
             COUNT(le.id) AS total_logins,
-            MAX(le.logged_in_at) AS last_login
+            MAX(le.logged_in_at) AS last_login,
+            ${directSummarySelect}
           FROM users u
           LEFT JOIN login_events le ON le.user_id = u.id
           GROUP BY u.id, u.fullname, u.email, u.is_admin, u.created_at
           ORDER BY
+            CASE WHEN last_message_at IS NULL THEN 1 ELSE 0 END ASC,
+            last_message_at DESC,
             CASE WHEN last_login IS NULL THEN 1 ELSE 0 END ASC,
             last_login DESC,
             CASE WHEN trim(u.fullname) = '' THEN lower(u.email) ELSE lower(u.fullname) END ASC,
             lower(u.email) ASC
           LIMIT ?
           `,
-          [limit]
+          [
+            currentUserId,
+            currentUserId,
+            currentUserId,
+            currentUserId,
+            currentUserId,
+            currentUserId,
+            currentUserId,
+            limit,
+          ]
         );
 
     res.json({
@@ -670,6 +742,10 @@ app.get("/api/chat/users", async (req, res) => {
         created_at: user.created_at,
         total_logins: Number(user.total_logins) || 0,
         last_login: user.last_login || null,
+        last_message_text: user.last_message_text || "",
+        last_message_at: user.last_message_at || null,
+        last_message_sender_user_id: Number(user.last_message_sender_user_id) || null,
+        incoming_message_count: Number(user.incoming_message_count) || 0,
       })),
     });
   } catch (error) {
