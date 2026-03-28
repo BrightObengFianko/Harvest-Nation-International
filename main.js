@@ -19,8 +19,6 @@ document.addEventListener("DOMContentLoaded", function () {
     ? [...localApiBases, currentOriginApiBase]
     : [currentOriginApiBase, ...localApiBases]
   ).filter((value, index, array) => value && array.indexOf(value) === index);
-  const LOCAL_USERS_KEY = "hni_local_users_v1";
-  const LOCAL_LOGIN_EVENTS_KEY = "hni_local_login_events_v1";
   const CURRENT_USER_KEY = "hni_current_user";
   const MAINPAGE_ROOT_PATH = "/bright/mainpage/mainpage.html";
 
@@ -110,117 +108,13 @@ document.addEventListener("DOMContentLoaded", function () {
     window.location.replace(targetUrl);
   }
 
-  function loadLocalUsers() {
+  function clearLegacyLocalAuthData() {
     try {
-      const raw = window.localStorage.getItem(LOCAL_USERS_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveLocalUsers(users) {
-    try {
-      window.localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+      window.localStorage.removeItem("hni_local_users_v1");
+      window.localStorage.removeItem("hni_local_login_events_v1");
     } catch {
       // Ignore storage failures.
     }
-  }
-
-  function loadLocalLoginEvents() {
-    try {
-      const raw = window.localStorage.getItem(LOCAL_LOGIN_EVENTS_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveLocalLoginEvents(events) {
-    try {
-      window.localStorage.setItem(LOCAL_LOGIN_EVENTS_KEY, JSON.stringify(events));
-    } catch {
-      // Ignore storage failures.
-    }
-  }
-
-  function addLocalLoginEvent(user) {
-    if (!user) {
-      return;
-    }
-
-    const events = loadLocalLoginEvents();
-    events.unshift({
-      id: `event-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      userId: user.id,
-      email: user.email,
-      loggedInAt: new Date().toISOString(),
-      source: "local",
-    });
-    saveLocalLoginEvents(events.slice(0, 1000));
-  }
-
-  function localSignup({ fullname, email, password }) {
-    const users = loadLocalUsers();
-    const normalizedEmail = String(email || "").trim().toLowerCase();
-
-    const existing = users.find((user) => user.email === normalizedEmail);
-    if (existing) {
-      return {
-        ok: false,
-        message: "An account with this email already exists.",
-      };
-    }
-
-    const newUser = {
-      id: `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      fullname: String(fullname || "").trim(),
-      email: normalizedEmail,
-      password,
-      isAdmin: false,
-      is_admin: 0,
-      createdAt: new Date().toISOString(),
-    };
-
-    users.push(newUser);
-    saveLocalUsers(users);
-
-    return {
-      ok: true,
-      data: {
-        user: {
-          id: newUser.id,
-          fullname: newUser.fullname,
-          email: newUser.email,
-        },
-      },
-    };
-  }
-
-  function localLogin({ identifier, password }) {
-    const normalizedEmail = String(identifier || "").trim().toLowerCase();
-    const users = loadLocalUsers();
-    const user = users.find((item) => item.email === normalizedEmail);
-
-    if (!user || user.password !== password) {
-      return {
-        ok: false,
-        message: "Invalid email or password.",
-      };
-    }
-
-    return {
-      ok: true,
-      data: {
-        user: {
-          id: user.id,
-          fullname: user.fullname,
-          email: user.email,
-        },
-      },
-    };
   }
 
   async function requestJSON(path, payload) {
@@ -262,7 +156,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return {
       ok: false,
       offline: true,
-      message: "Backend is unreachable. Switching to local auth mode.",
+      message: "Backend is unreachable. Start the backend server and try again.",
       details: lastNetworkError ? String(lastNetworkError.message || lastNetworkError) : "",
     };
   }
@@ -342,28 +236,13 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       if (!result.ok) {
-        if (result.offline) {
-          const localResult = localLogin({ identifier, password });
-          if (!localResult.ok) {
-            showMessage(loginMsg, localResult.message);
-            return;
-          }
-
-          const localUser = localResult.data.user;
-          window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(localUser));
-          addLocalLoginEvent(localUser);
-          prepareMainPageLink();
-          showMessage(loginMsg, "Login successful. Opening Main Page...", "success");
-          performPostAuthRedirect();
-          return;
-        }
-
         showMessage(loginMsg, result.message);
         return;
       }
 
       const user = result.data.user || null;
       if (user) {
+        clearLegacyLocalAuthData();
         window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
       }
 
@@ -435,32 +314,13 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       if (!result.ok) {
-        if (result.offline) {
-          const localResult = localSignup({
-            fullname: cleanFullname,
-            email: cleanEmail,
-            password: cleanPassword,
-          });
-
-          if (!localResult.ok) {
-            showMessage(signupMsg, localResult.message);
-            return;
-          }
-
-          const localUser = localResult.data.user;
-          window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(localUser));
-          prepareMainPageLink();
-          showMessage(signupMsg, "Account created successfully. Opening Main Page...", "success");
-          performPostAuthRedirect();
-          return;
-        }
-
         showMessage(signupMsg, result.message);
         return;
       }
 
       const user = result.data.user || null;
       if (user) {
+        clearLegacyLocalAuthData();
         window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
       }
 
@@ -474,20 +334,57 @@ document.addEventListener("DOMContentLoaded", function () {
   if (forgotForm) {
     const forgotMsg = document.getElementById("forgotError");
     const forgotEmail = document.getElementById("forgotEmail");
+    const forgotPassword = document.getElementById("forgotPassword");
+    const forgotConfirmPassword = document.getElementById("forgotConfirmPassword");
 
-    forgotForm.addEventListener("submit", function (e) {
+    forgotForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       clearMessage(forgotMsg);
-      clearError(forgotEmail);
+      [forgotEmail, forgotPassword, forgotConfirmPassword].forEach(clearError);
 
-      if (!forgotEmail.value.trim() || !forgotEmail.value.match(emailPattern)) {
+      const cleanEmail = forgotEmail.value.trim();
+      const cleanPassword = forgotPassword?.value || "";
+      const cleanConfirmPassword = forgotConfirmPassword?.value || "";
+
+      if (!cleanEmail || !cleanEmail.match(emailPattern)) {
         showError(forgotEmail);
         showMessage(forgotMsg, "Please enter a valid email address.");
         return;
       }
 
-      showMessage(forgotMsg, "Password reset link has been sent to your email.", "success");
-      forgotForm.reset();
+      if (cleanPassword.length < 6) {
+        showError(forgotPassword);
+        showMessage(forgotMsg, "Password must be at least 6 characters.");
+        return;
+      }
+
+      if (!cleanConfirmPassword || cleanPassword !== cleanConfirmPassword) {
+        showError(forgotConfirmPassword);
+        showMessage(forgotMsg, "Passwords do not match.");
+        return;
+      }
+
+      showMessage(forgotMsg, "Resetting password...", "success");
+
+      const result = await requestJSON("/auth/reset-password", {
+        email: cleanEmail,
+        newPassword: cleanPassword,
+      });
+
+      if (!result.ok) {
+        showMessage(forgotMsg, result.message);
+        return;
+      }
+
+      const user = result.data.user || null;
+      if (user) {
+        clearLegacyLocalAuthData();
+        window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+      }
+
+      prepareMainPageLink();
+      showMessage(forgotMsg, "Password reset successful. Opening Main Page...", "success");
+      performPostAuthRedirect();
     });
   }
 });

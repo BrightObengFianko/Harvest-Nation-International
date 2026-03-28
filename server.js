@@ -1131,6 +1131,51 @@ app.post("/api/auth/signup", async (req, res) => {
   }
 });
 
+app.post("/api/auth/reset-password", async (req, res) => {
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const newPassword = String(req.body?.newPassword || "");
+
+  if (!email || !newPassword) {
+    res.status(400).json({ ok: false, message: "Email and new password are required." });
+    return;
+  }
+
+  if (!isValidEmailAddress(email)) {
+    res.status(400).json({ ok: false, message: "Enter a valid email address." });
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    res.status(400).json({ ok: false, message: "Password must be at least 6 characters." });
+    return;
+  }
+
+  try {
+    const user = await get("SELECT id, fullname, email, is_admin FROM users WHERE lower(email) = lower(?)", [email]);
+    if (!user) {
+      res.status(404).json({ ok: false, message: "No account was found with this email." });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await run("UPDATE users SET password_hash = ? WHERE id = ?", [passwordHash, user.id]);
+    const updatedUser = await promoteOwnerAdminIfNeeded(user);
+
+    res.json({
+      ok: true,
+      message: "Password reset successful.",
+      user: {
+        id: updatedUser.id,
+        fullname: updatedUser.fullname,
+        email: updatedUser.email,
+        is_admin: Number(updatedUser.is_admin) === 1,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: "Server error while resetting password." });
+  }
+});
+
 app.post("/api/auth/admin/login", async (req, res) => {
   const identifier = String(req.body?.identifier || "").trim().toLowerCase();
   const password = String(req.body?.password || "");
