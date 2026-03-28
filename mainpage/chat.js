@@ -19,6 +19,7 @@ const liveMessage = document.querySelector("#chat-live-message");
 const CURRENT_USER_KEY = "hni_current_user";
 const ACCOUNT_PROFILE_STORAGE_KEY = "hni_account_profiles_v1";
 const CHAT_NOTIFICATION_SEEN_KEY = "hni_chat_notification_seen_v1";
+const CHAT_READ_STATE_KEY = "hni_chat_read_state_v1";
 const POLL_MESSAGES_MS = 4000;
 const POLL_USERS_MS = 20000;
 const SEARCH_SUGGEST_DEBOUNCE_MS = 260;
@@ -319,6 +320,68 @@ function saveNotificationSeenStorage(storage) {
   }
 }
 
+function getChatReadStateStorage() {
+  try {
+    const raw = window.localStorage.getItem(CHAT_READ_STATE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveChatReadStateStorage(storage) {
+  try {
+    window.localStorage.setItem(CHAT_READ_STATE_KEY, JSON.stringify(storage));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function getChatReadStateUserKey(user) {
+  const email = String(user?.email || "").trim().toLowerCase();
+  if (email) {
+    return email;
+  }
+  return String(user?.id || "").trim();
+}
+
+function getConversationReadCount(peerUserId) {
+  const sessionKey = getChatReadStateUserKey(activeSessionUser);
+  if (!sessionKey) {
+    return 0;
+  }
+
+  const storage = getChatReadStateStorage();
+  const sessionState = storage[sessionKey];
+  if (!sessionState || typeof sessionState !== "object") {
+    return 0;
+  }
+
+  return Number(sessionState[String(peerUserId)] || 0);
+}
+
+function markConversationRead(peerUserId, readCount = null) {
+  const normalizedPeerId = parsePositiveInteger(peerUserId);
+  const sessionKey = getChatReadStateUserKey(activeSessionUser);
+  if (!normalizedPeerId || !sessionKey) {
+    return;
+  }
+
+  let nextReadCount = Number(readCount);
+  if (!Number.isFinite(nextReadCount) || nextReadCount < 0) {
+    const peerUser = availableUsers.find((user) => Number(user?.id) === normalizedPeerId);
+    nextReadCount = Number(peerUser?.incoming_message_count) || 0;
+  }
+
+  const storage = getChatReadStateStorage();
+  const sessionState =
+    storage[sessionKey] && typeof storage[sessionKey] === "object" ? storage[sessionKey] : {};
+  sessionState[String(normalizedPeerId)] = nextReadCount;
+  storage[sessionKey] = sessionState;
+  saveChatReadStateStorage(storage);
+}
+
 function getNotificationSeenKey(user) {
   const email = String(user?.email || "").trim().toLowerCase();
   if (email) {
@@ -588,6 +651,20 @@ function getConversationPreview(user) {
   return String(user?.email || "").trim() || "Start a conversation";
 }
 
+function getConversationBadgeCount(user) {
+  const peerUserId = Number(user?.id);
+  if (!Number.isInteger(peerUserId) || peerUserId <= 0) {
+    return 0;
+  }
+
+  const totalIncoming = Math.max(0, Number(user?.incoming_message_count) || 0);
+  const readCount = Math.max(0, getConversationReadCount(peerUserId));
+  if (totalIncoming <= readCount) {
+    return 0;
+  }
+  return totalIncoming - readCount;
+}
+
 function buildConversationItem({
   label,
   sublabel,
@@ -709,6 +786,10 @@ function renderUserList() {
     const label = getDisplayName(user);
     const preview = getConversationPreview(user);
     const timeLabel = formatConversationTime(user.last_message_at || user.last_login || user.created_at);
+    const badgeCount =
+      !isSelf && activeChannel.scope === "direct" && Number(activeChannel.peerUserId) === Number(user.id)
+        ? 0
+        : getConversationBadgeCount(user);
     chatUserList.append(
       buildConversationItem({
         label,
@@ -717,7 +798,7 @@ function renderUserList() {
         avatarUrl: getUserProfileImage(user),
         avatarInitials: getUserInitials(user),
         timeLabel,
-        badgeCount: Number(user.incoming_message_count) || 0,
+        badgeCount,
         scope: "direct",
         peerUserId: user.id,
         active: !isSelf && activeChannel.scope === "direct" && Number(activeChannel.peerUserId) === Number(user.id),
@@ -752,6 +833,9 @@ function syncDirectConversationSummary(messages) {
     last_message_at: lastMessage?.created_at || null,
     last_message_sender_user_id: Number(lastMessage?.sender?.id) || null,
   };
+  if (Number(lastMessage?.sender?.id) !== Number(activeSessionUser?.id)) {
+    markConversationRead(peerUserId, Number(availableUsers[userIndex].incoming_message_count) || 0);
+  }
   lastActivePeer = availableUsers[userIndex];
   renderUserList();
 }
@@ -856,6 +940,15 @@ async function refreshUsers() {
   setServerStatus("Online", true);
 
   if (activeChannel.scope === "direct" && activeChannel.peerUserId) {
+    const activePeer = availableUsers.find(
+      (user) => Number(user?.id) === Number(activeChannel.peerUserId)
+    );
+    if (activePeer) {
+      markConversationRead(activeChannel.peerUserId, Number(activePeer.incoming_message_count) || 0);
+    }
+  }
+
+  if (activeChannel.scope === "direct" && activeChannel.peerUserId) {
     const hasPeer = availableUsers.some((user) => Number(user.id) === Number(activeChannel.peerUserId));
     if (hasPeer) {
       lastActivePeer =
@@ -951,6 +1044,13 @@ async function refreshMessages(forceScroll = false) {
   if (needsRender) {
     renderMessages(messages);
     lastRenderedSignature = signature;
+  }
+
+  if (activeChannel.scope === "direct" && activeChannel.peerUserId) {
+    const peerUser = availableUsers.find(
+      (user) => Number(user?.id) === Number(activeChannel.peerUserId)
+    );
+    markConversationRead(activeChannel.peerUserId, Number(peerUser?.incoming_message_count) || 0);
   }
 
   syncDirectConversationSummary(messages);
@@ -1051,6 +1151,14 @@ async function activateChannel(scope, peerUserId = null) {
   }
 
   lastRenderedSignature = "";
+  if (activeChannel.scope === "direct" && activeChannel.peerUserId) {
+    const activePeer = availableUsers.find(
+      (user) => Number(user?.id) === Number(activeChannel.peerUserId)
+    );
+    if (activePeer) {
+      markConversationRead(activeChannel.peerUserId, Number(activePeer.incoming_message_count) || 0);
+    }
+  }
   renderUserList();
   updateThreadHeader();
 
