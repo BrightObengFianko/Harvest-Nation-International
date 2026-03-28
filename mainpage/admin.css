@@ -106,8 +106,7 @@ body.auth-locked {
   box-shadow: 0 12px 30px rgba(18, 31, 58, 0.2);
   color: #ffffff;
   display: flex;
-  justify-content: flex-start;
-  gap: 12px;
+  justify-content: space-between;
   padding: 14px 16px;
 }
 
