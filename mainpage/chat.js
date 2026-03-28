@@ -6,6 +6,7 @@ const chatUserSuggestions = document.querySelector("#chat-user-suggestions");
 const chatUserList = document.querySelector("#chat-user-list");
 const chatUserEmptyState = document.querySelector("#chat-user-empty-state");
 const chatThreadHead = document.querySelector("#chat-thread-head");
+const chatThreadBackBtn = document.querySelector("#chat-thread-back-btn");
 const chatThreadTitle = document.querySelector("#chat-thread-title");
 const chatThreadSubtitle = document.querySelector("#chat-thread-subtitle");
 const chatThreadEmptyState = document.querySelector("#chat-thread-empty-state");
@@ -23,6 +24,7 @@ const SEARCH_SUGGEST_DEBOUNCE_MS = 260;
 const USER_SEARCH_RESULTS_LIMIT = 1000;
 const DEFAULT_COMPOSER_PLACEHOLDER = "Type your message here...";
 const INACTIVE_COMPOSER_PLACEHOLDER = "Select a user on the left to start chatting...";
+const MOBILE_CHAT_BREAKPOINT = 760;
 
 const currentHost = window.location.hostname || "127.0.0.1";
 const currentProtocol = String(window.location.protocol || "").toLowerCase();
@@ -55,6 +57,7 @@ let sendingInProgress = false;
 let lastRenderedSignature = "";
 let searchSuggestTimerId = null;
 let lastSuggestionRequestId = 0;
+let mobileChatView = "list";
 let lastActivePeer = null;
 
 function showMessage(text) {
@@ -118,6 +121,37 @@ function setThreadMode(hasConversation) {
   if (chatForm) {
     chatForm.hidden = false;
   }
+  if (!hasConversation) {
+    mobileChatView = "list";
+  }
+  syncMobileChatView();
+}
+
+function isPhoneChatLayout() {
+  return window.innerWidth <= MOBILE_CHAT_BREAKPOINT;
+}
+
+function syncMobileChatView() {
+  if (!document.body) {
+    return;
+  }
+  const showThread =
+    isPhoneChatLayout() && mobileChatView === "thread" && activeChannel.scope !== "none";
+  document.body.classList.toggle("chat-mobile-thread-open", showThread);
+}
+
+function openMobileChatList() {
+  mobileChatView = "list";
+  syncMobileChatView();
+}
+
+function openMobileChatThread() {
+  if (activeChannel.scope === "none") {
+    openMobileChatList();
+    return;
+  }
+  mobileChatView = "thread";
+  syncMobileChatView();
 }
 
 function setComposerEnabled(enabled) {
@@ -877,6 +911,7 @@ async function activateChannel(scope, peerUserId = null) {
     return;
   }
 
+  openMobileChatThread();
   setThreadMode(true);
   setComposerEnabled(true);
   await refreshMessages(true);
@@ -1019,6 +1054,14 @@ function setupChatEvents() {
     });
   }
 
+  if (chatThreadBackBtn) {
+    chatThreadBackBtn.addEventListener("click", () => {
+      openMobileChatList();
+    });
+  }
+
+  window.addEventListener("resize", syncMobileChatView);
+
   if (chatLogoutBtn) {
     chatLogoutBtn.addEventListener("click", () => {
       window.localStorage.removeItem(CURRENT_USER_KEY);
@@ -1085,6 +1128,7 @@ async function initChatPage() {
   } else if (requestedPeer) {
     await activateChannel("direct", requestedPeer);
   } else {
+    openMobileChatList();
     await activateChannel("none");
   }
 

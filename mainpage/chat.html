@@ -65,8 +65,14 @@
         </div>
 
         <header class="chat-thread-head" id="chat-thread-head" hidden>
-          <h2 id="chat-thread-title">Conversation</h2>
-          <p id="chat-thread-subtitle">Private chat</p>
+          <button type="button" class="chat-thread-back" id="chat-thread-back-btn" aria-label="Back to chat list">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+            <span>Chats</span>
+          </button>
+          <div class="chat-thread-head-copy">
+            <h2 id="chat-thread-title">Conversation</h2>
+            <p id="chat-thread-subtitle">Private chat</p>
+          </div>
         </header>
 
         <div id="chat-thread" class="chat-thread" aria-live="polite"></div>
