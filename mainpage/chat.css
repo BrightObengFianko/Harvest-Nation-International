@@ -511,9 +511,10 @@ body.chat-page-body {
 }
 
 .chat-form {
-  align-items: flex-end;
+  align-items: stretch;
   border-top: 1px solid var(--chat-line);
   display: flex;
+  flex-direction: column;
   gap: 8px;
   padding: 9px;
 }
@@ -526,10 +527,12 @@ body.chat-page-body {
   flex: 1;
   font: inherit;
   font-size: 0.9rem;
+  max-width: 100%;
   min-height: 44px;
   outline: none;
   padding: 9px 10px;
   resize: vertical;
+  width: 100%;
 }
 
 #chat-message-input::placeholder {
@@ -548,6 +551,7 @@ body.chat-page-body {
 }
 
 #chat-send-btn {
+  align-self: flex-end;
   background: var(--brand-gradient);
   border: 0;
   border-radius: 11px;
@@ -560,6 +564,7 @@ body.chat-page-body {
   min-width: 88px;
   padding: 0 14px;
   text-transform: uppercase;
+  width: fit-content;
 }
 
 #chat-send-btn:hover {
@@ -720,17 +725,5 @@ body.chat-page-body {
 
   .chat-form {
     align-items: stretch;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  #chat-message-input {
-    max-width: 100%;
-    width: 100%;
-  }
-
-  #chat-send-btn {
-    margin-left: auto;
-    width: fit-content;
   }
 }

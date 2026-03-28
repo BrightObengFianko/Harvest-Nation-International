@@ -605,7 +605,7 @@ app.get("/api/chat/users", async (req, res) => {
 
     const hasQuery = Boolean(query);
     const maxLimit = 1000;
-    const defaultLimit = hasQuery ? 1000 : 400;
+    const defaultLimit = 1000;
     const limit = Math.min(Math.max(requestedLimit || defaultLimit, 1), maxLimit);
     const safeQueryPattern = `%${escapeSqlLike(query)}%`;
 
@@ -627,6 +627,7 @@ app.get("/api/chat/users", async (req, res) => {
             OR lower(u.email) LIKE ? ESCAPE '\\'
           )
           GROUP BY u.id, u.fullname, u.email, u.is_admin, u.created_at
+          HAVING COUNT(le.id) > 0 OR u.id = ?
           ORDER BY
             CASE WHEN last_login IS NULL THEN 1 ELSE 0 END ASC,
             last_login DESC,
@@ -634,7 +635,7 @@ app.get("/api/chat/users", async (req, res) => {
             lower(u.email) ASC
           LIMIT ?
           `,
-          [safeQueryPattern, safeQueryPattern, limit]
+          [safeQueryPattern, safeQueryPattern, currentUserId, limit]
         )
       : await all(
           `
@@ -649,6 +650,7 @@ app.get("/api/chat/users", async (req, res) => {
           FROM users u
           LEFT JOIN login_events le ON le.user_id = u.id
           GROUP BY u.id, u.fullname, u.email, u.is_admin, u.created_at
+          HAVING COUNT(le.id) > 0 OR u.id = ?
           ORDER BY
             CASE WHEN last_login IS NULL THEN 1 ELSE 0 END ASC,
             last_login DESC,
@@ -656,7 +658,7 @@ app.get("/api/chat/users", async (req, res) => {
             lower(u.email) ASC
           LIMIT ?
           `,
-          [limit]
+          [currentUserId, limit]
         );
 
     res.json({

@@ -666,7 +666,7 @@ async function fetchUsers(options = {}) {
   }
 
   const query = String(options.query || "").trim();
-  const limit = parsePositiveInteger(options.limit) || (query ? USER_SEARCH_RESULTS_LIMIT : 400);
+  const limit = parsePositiveInteger(options.limit) || USER_SEARCH_RESULTS_LIMIT;
   const params = new URLSearchParams();
   params.set("currentUserId", String(activeSessionUser.id));
   params.set("limit", String(limit));
