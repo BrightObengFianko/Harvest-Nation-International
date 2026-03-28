@@ -625,11 +625,19 @@ body.chat-page-body {
 
 @media (max-width: 760px) {
   body.chat-page-body {
+    min-height: 100dvh;
     padding: 10px;
+  }
+
+  .chat-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - 20px);
   }
 
   .chat-topbar {
     align-items: stretch;
+    flex: 0 0 auto;
     flex-direction: column;
     gap: 9px;
   }
@@ -645,13 +653,15 @@ body.chat-page-body {
 
   .chat-shell {
     border-radius: 16px;
-    height: calc(100dvh - 120px);
-    min-height: calc(100dvh - 120px);
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
   }
 
   .chat-users-panel {
+    height: 100%;
     max-height: none;
-    min-height: calc(100dvh - 120px);
+    min-height: 0;
     overflow: hidden;
   }
 
@@ -669,7 +679,7 @@ body.chat-page-body {
 
   body.chat-page-body.chat-mobile-thread-open .chat-thread-panel {
     display: flex;
-    min-height: calc(100dvh - 120px);
+    min-height: 0;
   }
 
   .chat-users-head {
