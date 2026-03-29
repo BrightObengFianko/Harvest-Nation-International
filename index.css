@@ -226,14 +226,26 @@ button:hover {
   transform: translateY(-1px);
 }
 
+.auth-card form button,
+.login-container form button,
+.card form button {
+  display: inline-flex;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  width: min(100%, 230px);
+}
+
 .login-footer,
 .links {
   color: #4e597a;
   display: flex;
+  flex-wrap: wrap;
   font-size: 0.95rem;
   gap: 10px;
-  justify-content: space-between;
+  justify-content: center;
   margin-top: 15px;
+  text-align: center;
 }
 
 .links {
