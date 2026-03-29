@@ -2144,6 +2144,12 @@ a {
     width: 100%;
   }
 
+  .mobile-auth-links .btn-light {
+    background: var(--brand-gradient);
+    border-color: transparent;
+    color: #ffffff;
+  }
+
   .comment-input-stack {
     position: static;
   }

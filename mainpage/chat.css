@@ -912,67 +912,67 @@ body.chat-page-body {
 
 @media (max-width: 520px) {
   body.chat-page-body {
-    padding: 8px;
+    padding: 10px;
   }
 
   .chat-layout {
-    height: calc(100dvh - 16px);
-    max-height: calc(100dvh - 16px);
+    height: calc(100dvh - 20px);
+    max-height: calc(100dvh - 20px);
     min-height: 0;
   }
 
   .chat-topbar {
-    gap: 7px;
-    margin-bottom: 8px;
+    gap: 9px;
+    margin-bottom: 10px;
   }
 
   .chat-top-left {
-    gap: 6px;
+    gap: 7px;
   }
 
   .chat-top-left h1 {
-    font-size: 1.12rem;
+    font-size: 1.28rem;
   }
 
   .chat-top-user {
-    font-size: 0.82rem;
+    font-size: 0.86rem;
   }
 
   .chat-top-actions {
-    gap: 6px;
+    gap: 7px;
   }
 
   .chat-top-btn {
-    border-radius: 10px;
-    font-size: 0.72rem;
-    gap: 6px;
-    min-height: 34px;
-    padding: 6px 10px;
+    border-radius: 11px;
+    font-size: 0.78rem;
+    gap: 7px;
+    min-height: 38px;
+    padding: 7px 12px;
   }
 
   .chat-shell {
-    border-radius: 14px;
+    border-radius: 16px;
     min-height: 0;
   }
 
   .chat-users-head {
-    padding: 9px 10px 6px;
+    padding: 10px 11px 6px;
   }
 
   .chat-users-head h2 {
-    font-size: 0.86rem;
+    font-size: 0.94rem;
   }
 
   .chat-server-status {
-    font-size: 0.58rem;
-    padding: 3px 7px;
+    font-size: 0.62rem;
+    padding: 3px 8px;
   }
 
   .chat-search-wrap {
-    border-radius: 10px;
-    margin: 5px 10px 7px;
-    min-height: 36px;
-    padding: 0 8px;
+    border-radius: 11px;
+    margin: 6px 11px 8px;
+    min-height: 38px;
+    padding: 0 9px;
   }
 
   #chat-user-search {
@@ -980,78 +980,78 @@ body.chat-page-body {
   }
 
   .chat-user-list {
-    gap: 5px;
-    padding: 7px 8px calc(16px + env(safe-area-inset-bottom, 0px));
+    gap: 6px;
+    padding: 8px 10px calc(18px + env(safe-area-inset-bottom, 0px));
   }
 
   .chat-user-item button {
     align-items: flex-start;
-    border-radius: 10px;
-    gap: 7px;
-    min-height: 58px;
-    padding: 7px 8px;
+    border-radius: 11px;
+    gap: 8px;
+    min-height: 60px;
+    padding: 8px 10px;
   }
 
   .chat-user-main strong {
-    font-size: 0.84rem;
+    font-size: 0.96rem;
   }
 
   .chat-user-main span {
     display: block;
-    font-size: 0.68rem;
-    line-height: 1.2;
+    font-size: 0.72rem;
+    line-height: 1.25;
   }
 
   .chat-user-avatar {
-    flex-basis: 34px;
-    height: 34px;
-    width: 34px;
+    flex-basis: 42px;
+    height: 42px;
+    width: 42px;
   }
 
   .chat-user-side {
     align-items: flex-end;
     display: flex;
-    gap: 4px;
-    min-width: 36px;
+    gap: 5px;
+    min-width: 40px;
   }
 
   .chat-user-time {
-    font-size: 0.6rem;
+    font-size: 0.64rem;
   }
 
   .chat-user-count {
-    font-size: 0.58rem;
-    min-height: 17px;
-    min-width: 17px;
-    padding: 0 4px;
+    font-size: 0.62rem;
+    min-height: 18px;
+    min-width: 18px;
+    padding: 0 5px;
   }
 
   .chat-thread-head {
-    gap: 8px;
-    padding: 9px 10px 7px;
+    gap: 10px;
+    padding: 10px 14px 8px;
   }
 
   .chat-thread-head h2 {
-    font-size: 0.96rem;
+    font-size: 1.08rem;
   }
 
   .chat-thread-head p {
-    font-size: 0.76rem;
+    font-size: 0.82rem;
   }
 
   .chat-thread-back {
-    font-size: 0.68rem;
-    gap: 5px;
-    padding: 5px 9px;
+    font-size: 0.72rem;
+    gap: 6px;
+    padding: 6px 10px;
   }
 
   .chat-thread {
     gap: 4px;
-    padding: 10px 10px 6px;
+    padding: 12px 12px 6px;
   }
 
   .chat-message {
-    max-width: 94%;
+    max-width: min(500px, 90%);
   }
 
   .chat-message-bubble {
@@ -1059,33 +1059,35 @@ body.chat-page-body {
     border: 0;
     border-radius: 0;
     box-shadow: none;
-    font-size: 0.84rem;
+    font-size: 0.9rem;
     padding: 0;
   }
 
   .chat-message-meta {
-    font-size: 0.63rem;
+    font-size: 0.67rem;
   }
 
   .chat-form {
     gap: 6px;
-    padding: 8px;
-    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    padding: 9px;
+    padding-bottom: calc(9px + env(safe-area-inset-bottom, 0px));
   }
 
   #chat-message-input {
-    border-radius: 10px;
+    border-radius: 11px;
     font-size: 16px;
     line-height: 1.35;
-    min-height: 40px;
-    padding: 8px 9px;
+    height: 44px;
+    max-height: 44px;
+    min-height: 44px;
+    padding: 9px 12px 9px 10px;
   }
 
   #chat-send-btn {
-    border-radius: 10px;
-    font-size: 0.76rem;
-    min-height: 36px;
-    padding: 0 12px;
+    border-radius: 11px;
+    font-size: 0.82rem;
+    min-height: 38px;
+    padding: 0 14px;
     width: 100%;
   }
 }
