@@ -1,26 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const currentHost = window.location.hostname || "127.0.0.1";
-  const currentProtocol = String(window.location.protocol || "").toLowerCase();
-  const currentPort = String(window.location.port || "");
-  const currentOriginApiBase =
-    ["http:", "https:"].includes(currentProtocol) && window.location.origin
-      ? `${window.location.origin}/api`
-      : "";
-  const localApiBases = [
-    `http://${currentHost}:3000/api`,
-    "http://127.0.0.1:3000/api",
-    "http://localhost:3000/api",
-  ];
-  const preferLocalApi =
-    ["127.0.0.1", "localhost"].includes(String(currentHost).toLowerCase()) &&
-    currentPort &&
-    currentPort !== "3000";
-  const API_BASE_CANDIDATES = (preferLocalApi
-    ? [...localApiBases, currentOriginApiBase]
-    : [currentOriginApiBase, ...localApiBases]
-  ).filter((value, index, array) => value && array.indexOf(value) === index);
+  const API_BASE = "/api";
   const CURRENT_USER_KEY = "hni_current_user";
-  const AUTH_BACKUP_STORAGE_KEY = "hni_auth_backups_v1";
   const MAINPAGE_ROOT_PATH = "/bright/mainpage/mainpage.html";
 
   function showMessage(container, message, type = "error") {
@@ -118,169 +98,51 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function normalizeEmail(value) {
-    return String(value || "").trim().toLowerCase();
-  }
-
-  function getAuthBackupStorage() {
-    try {
-      const raw = window.localStorage.getItem(AUTH_BACKUP_STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : {};
-      return parsed && typeof parsed === "object" ? parsed : {};
-    } catch {
-      return {};
-    }
-  }
-
-  function saveAuthBackupStorage(storage) {
-    try {
-      window.localStorage.setItem(AUTH_BACKUP_STORAGE_KEY, JSON.stringify(storage));
-    } catch {
-      // Ignore storage failures.
-    }
-  }
-
-  async function hashPasswordForBackup(password) {
-    try {
-      if (!window.crypto?.subtle || typeof window.TextEncoder !== "function") {
-        return "";
-      }
-
-      const encoder = new window.TextEncoder();
-      const bytes = encoder.encode(String(password || ""));
-      const digest = await window.crypto.subtle.digest("SHA-256", bytes);
-      return Array.from(new Uint8Array(digest))
-        .map((value) => value.toString(16).padStart(2, "0"))
-        .join("");
-    } catch {
-      return "";
-    }
-  }
-
-  async function saveAuthBackup(fullname, email, password) {
-    const cleanEmail = normalizeEmail(email);
-    const cleanPassword = String(password || "");
-    if (!cleanEmail || !cleanPassword) {
-      return;
-    }
-
-    const passwordDigest = await hashPasswordForBackup(cleanPassword);
-    if (!passwordDigest) {
-      return;
-    }
-
-    const storage = getAuthBackupStorage();
-    storage[cleanEmail] = {
-      fullname: String(fullname || "").trim() || cleanEmail.split("@")[0] || "Member",
-      email: cleanEmail,
-      password_digest: passwordDigest,
-      updated_at: new Date().toISOString(),
-    };
-    saveAuthBackupStorage(storage);
-  }
-
-  function getAuthBackup(email) {
-    const cleanEmail = normalizeEmail(email);
-    if (!cleanEmail) {
-      return null;
-    }
-
-    const storage = getAuthBackupStorage();
-    const backup = storage[cleanEmail];
-    return backup && typeof backup === "object" ? backup : null;
-  }
-
-  async function completeAuthSuccess(user, password, fallbackFullname = "") {
+  function completeAuthSuccess(user) {
     if (!user) {
       return;
     }
 
     clearLegacyLocalAuthData();
     window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-    await saveAuthBackup(user.fullname || fallbackFullname, user.email, password);
-  }
-
-  async function tryRestoreAccountFromBackup(identifier, password) {
-    const email = normalizeEmail(identifier);
-    const backup = getAuthBackup(email);
-    if (!backup) {
-      return { ok: false };
-    }
-
-    const requestedDigest = await hashPasswordForBackup(password);
-    if (!requestedDigest || requestedDigest !== String(backup.password_digest || "")) {
-      return { ok: false };
-    }
-
-    const restoreResult = await requestJSON("/auth/signup", {
-      fullname: String(backup.fullname || email.split("@")[0] || "Member").trim(),
-      email,
-      password,
-    });
-
-    if (restoreResult.ok) {
-      return {
-        ok: true,
-        restored: true,
-        data: restoreResult.data,
-      };
-    }
-
-    if (String(restoreResult.message || "").toLowerCase().includes("already exists")) {
-      return requestJSON("/auth/login", {
-        identifier: email,
-        password,
-      });
-    }
-
-    return {
-      ok: false,
-      message: restoreResult.message || "Unable to restore your saved account.",
-    };
   }
 
   async function requestJSON(path, payload) {
-    let lastNetworkError = null;
+    try {
+      const response = await fetch(`${API_BASE}${path}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    for (const apiBase of API_BASE_CANDIDATES) {
+      let data = {};
       try {
-        const response = await fetch(`${apiBase}${path}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        let data = {};
-        try {
-          data = await response.json();
-        } catch {
-          data = {};
-        }
-
-        if (!response.ok) {
-          return {
-            ok: false,
-            message: data.message || "Request failed.",
-          };
-        }
-
-        return {
-          ok: true,
-          data,
-        };
-      } catch (error) {
-        lastNetworkError = error;
+        data = await response.json();
+      } catch {
+        data = {};
       }
-    }
 
-    return {
-      ok: false,
-      offline: true,
-      message: "Backend is unreachable. Start the backend server and try again.",
-      details: lastNetworkError ? String(lastNetworkError.message || lastNetworkError) : "",
-    };
+      if (!response.ok) {
+        return {
+          ok: false,
+          message: data.message || "Request failed.",
+        };
+      }
+
+      return {
+        ok: true,
+        data,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        offline: true,
+        message: "Service is unreachable right now. Please try again shortly.",
+        details: error ? String(error.message || error) : "",
+      };
+    }
   }
 
   function bindAuthAction(form, action, options = {}) {
@@ -352,34 +214,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
       showMessage(loginMsg, "Checking credentials...", "success");
 
-      let result = await requestJSON("/auth/login", {
+      const result = await requestJSON("/auth/login", {
         identifier,
         password,
       });
 
       if (!result.ok) {
-        const restoredResult = await tryRestoreAccountFromBackup(identifier, password);
-        if (!restoredResult.ok) {
-          showMessage(loginMsg, result.message);
-          return;
-        }
-
-        result = restoredResult;
+        showMessage(loginMsg, result.message);
+        return;
       }
 
       const user = result.data.user || null;
       if (user) {
-        await completeAuthSuccess(user, password, user.fullname);
+        completeAuthSuccess(user);
       }
 
       prepareMainPageLink();
-      showMessage(
-        loginMsg,
-        result.restored
-          ? "Account restored on this device. Opening Main Page..."
-          : "Login successful. Opening Main Page...",
-        "success"
-      );
+      showMessage(loginMsg, "Login successful. Opening Main Page...", "success");
       performPostAuthRedirect();
     }, { submitButton: loginSubmitBtn });
   }
@@ -452,7 +303,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const user = result.data.user || null;
       if (user) {
-        await completeAuthSuccess(user, cleanPassword, cleanFullname);
+        completeAuthSuccess(user);
       }
 
       prepareMainPageLink();
@@ -509,7 +360,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const user = result.data.user || null;
       if (user) {
-        await completeAuthSuccess(user, cleanPassword, user.fullname || cleanEmail.split("@")[0]);
+        completeAuthSuccess(user);
       }
 
       prepareMainPageLink();

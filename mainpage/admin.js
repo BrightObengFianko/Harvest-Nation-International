@@ -2,8 +2,6 @@ const COMMENTS_STORAGE_KEY = "hni_mainpage_comments_v1";
 const VIDEO_STORAGE_KEY = "hni_video_playlist_v1";
 const ACTIVE_VIDEO_KEY = "hni_active_video_id_v1";
 const WEEKLY_CONTENT_STORAGE_KEY = "hni_weekly_content_v1";
-const LOCAL_USERS_KEY = "hni_local_users_v1";
-const LOCAL_LOGIN_EVENTS_KEY = "hni_local_login_events_v1";
 const CURRENT_USER_KEY = "hni_current_user";
 const OWNER_ADMIN_EMAIL = "brightobengfianko@gmail.com";
 const USERS_PAGE_SIZE = 5;
@@ -39,26 +37,7 @@ const defaultWeeklyContent = {
   ],
 };
 
-const currentHost = window.location.hostname || "127.0.0.1";
-const currentProtocol = String(window.location.protocol || "").toLowerCase();
-const currentPort = String(window.location.port || "");
-const currentOriginApiBase =
-  ["http:", "https:"].includes(currentProtocol) && window.location.origin
-    ? `${window.location.origin}/api`
-    : "";
-const localApiBases = [
-  `http://${currentHost}:3000/api`,
-  "http://127.0.0.1:3000/api",
-  "http://localhost:3000/api",
-];
-const preferLocalApi =
-  ["127.0.0.1", "localhost"].includes(String(currentHost).toLowerCase()) &&
-  currentPort &&
-  currentPort !== "3000";
-const API_BASE_CANDIDATES = (preferLocalApi
-  ? [...localApiBases, currentOriginApiBase]
-  : [currentOriginApiBase, ...localApiBases]
-).filter((value, index, array) => value && array.indexOf(value) === index);
+const API_BASE = "/api";
 
 const statUsers = document.querySelector("#stat-users");
 const statAdmins = document.querySelector("#stat-admins");
@@ -110,7 +89,6 @@ let usersPage = 1;
 let userSearchQuery = "";
 let serverOnline = false;
 let cachedServerUsers = [];
-let cachedLocalUsers = [];
 let cachedCombinedUsers = [];
 let pendingAdminConfirmResolver = null;
 let dashboardInitialized = false;
@@ -379,30 +357,6 @@ function saveCurrentUser(user) {
   );
 }
 
-function authenticateLocalAdmin(identifier, password) {
-  const normalized = String(identifier || "").trim().toLowerCase();
-  const users = loadLocalUsers();
-  const user = users.find((item) => String(item.email || "").trim().toLowerCase() === normalized);
-
-  if (!user || String(user.password || "") !== String(password || "")) {
-    return { ok: false, message: "Invalid email or password." };
-  }
-
-  if (!isUserAdmin(user)) {
-    return { ok: false, message: "Access denied. This account is not an admin." };
-  }
-
-  return {
-    ok: true,
-    user: {
-      id: user.id,
-      fullname: user.fullname,
-      email: user.email,
-      is_admin: true,
-    },
-  };
-}
-
 async function authenticateAdminCredentials(email, password) {
   const identifier = String(email || "").trim().toLowerCase();
   const result = await apiRequest("/auth/admin/login", {
@@ -422,10 +376,6 @@ async function authenticateAdminCredentials(email, password) {
       return { ok: false, message: "Access denied. This account is not an admin." };
     }
     return { ok: true, user };
-  }
-
-  if (result.offline) {
-    return authenticateLocalAdmin(identifier, password);
   }
 
   return { ok: false, message: result.message || "Login failed." };
@@ -491,75 +441,21 @@ async function tryAutoUnlockAdminAccess() {
 }
 
 async function apiRequest(path, options = {}) {
-  let lastError = null;
-
-  for (const apiBase of API_BASE_CANDIDATES) {
-    try {
-      const response = await fetch(`${apiBase}${path}`, options);
-      const data = await response.json();
-      if (!response.ok) {
-        return { ok: false, message: data.message || "Request failed." };
-      }
-      return { ok: true, data };
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  return {
-    ok: false,
-    offline: true,
-    message: "Auth API is offline. Showing local-mode records.",
-    details: lastError ? String(lastError.message || lastError) : "",
-  };
-}
-
-function loadLocalUsers() {
   try {
-    const raw = window.localStorage.getItem(LOCAL_USERS_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveLocalUsers(users) {
-  window.localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
-}
-
-function loadLocalLoginEvents() {
-  try {
-    const raw = window.localStorage.getItem(LOCAL_LOGIN_EVENTS_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveLocalLoginEvents(events) {
-  window.localStorage.setItem(LOCAL_LOGIN_EVENTS_KEY, JSON.stringify(events));
-}
-
-function buildLocalLoginMap() {
-  const events = loadLocalLoginEvents();
-  const map = new Map();
-
-  events.forEach((event) => {
-    const key = String(event.email || "").trim().toLowerCase();
-    if (!key) {
-      return;
+    const response = await fetch(`${API_BASE}${path}`, options);
+    const data = await response.json();
+    if (!response.ok) {
+      return { ok: false, message: data.message || "Request failed." };
     }
-    const current = map.get(key) || { count: 0, last: null };
-    current.count += 1;
-    if (!current.last || new Date(event.loggedInAt).getTime() > new Date(current.last).getTime()) {
-      current.last = event.loggedInAt;
-    }
-    map.set(key, current);
-  });
-
-  return { map, events };
+    return { ok: true, data };
+  } catch (error) {
+    return {
+      ok: false,
+      offline: true,
+      message: "Admin service is unavailable right now.",
+      details: error ? String(error.message || error) : "",
+    };
+  }
 }
 
 function normalizeVideoUrl(rawUrl) {
@@ -661,7 +557,7 @@ function setVideoInputMode() {
 
   if (videoSourceHelper) {
     videoSourceHelper.textContent = isUploadMode
-      ? "Upload from laptop works only when backend server is online on port 3000."
+      ? "Upload from laptop works when the live service is online."
       : "Use an embed link from YouTube/Vimeo or switch to upload mode.";
   }
 }
@@ -676,33 +572,27 @@ async function uploadVideoFile(file) {
     return { ok: false, message: "Please choose a valid video file." };
   }
 
-  let lastError = null;
+  try {
+    const formData = new FormData();
+    formData.append("media", target);
 
-  for (const apiBase of API_BASE_CANDIDATES) {
-    try {
-      const formData = new FormData();
-      formData.append("media", target);
-
-      const response = await fetch(`${apiBase}/media/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        return { ok: false, message: data.message || "Upload failed." };
-      }
-      return { ok: true, data };
-    } catch (error) {
-      lastError = error;
+    const response = await fetch(`${API_BASE}/media/upload`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return { ok: false, message: data.message || "Upload failed." };
     }
+    return { ok: true, data };
+  } catch (error) {
+    return {
+      ok: false,
+      offline: true,
+      message: "Upload failed. Please try again when the service is online.",
+      details: error ? String(error.message || error) : "",
+    };
   }
-
-  return {
-    ok: false,
-    offline: true,
-    message: "Upload failed. Start backend on port 3000 and try again.",
-    details: lastError ? String(lastError.message || lastError) : "",
-  };
 }
 
 function loadVideos() {
@@ -1192,41 +1082,16 @@ function updateUserSearchPredictions() {
 }
 
 function getCombinedUsers(serverUsers = []) {
-  const localUsers = loadLocalUsers();
-  const { map: localLoginMap } = buildLocalLoginMap();
-  cachedLocalUsers = localUsers;
-
-  const combined = [];
-
-  serverUsers.forEach((user) => {
-    combined.push({
-      id: String(user.id),
-      fullname: user.fullname,
-      email: user.email,
-      source: "server",
-      sourceLabel: "Server",
-      is_admin: isUserAdmin(user),
-      total_logins: Number(user.total_logins) || 0,
-      last_login: user.last_login,
-    });
-  });
-
-  localUsers.forEach((user) => {
-    const email = String(user.email || "").toLowerCase();
-    const logins = localLoginMap.get(email) || { count: 0, last: null };
-    combined.push({
-      id: String(user.id),
-      fullname: user.fullname,
-      email: user.email,
-      source: "local",
-      sourceLabel: "Local Mode",
-      is_admin: isUserAdmin(user),
-      total_logins: logins.count,
-      last_login: logins.last,
-    });
-  });
-
-  return combined;
+  return serverUsers.map((user) => ({
+    id: String(user.id),
+    fullname: user.fullname,
+    email: user.email,
+    source: "server",
+    sourceLabel: "Server",
+    is_admin: isUserAdmin(user),
+    total_logins: Number(user.total_logins) || 0,
+    last_login: user.last_login,
+  }));
 }
 
 function setStats(values) {
@@ -1236,37 +1101,30 @@ function setStats(values) {
 }
 
 async function refreshStats() {
-  const localUsers = loadLocalUsers();
-  const { events: localEvents } = buildLocalLoginMap();
-  const localUniqueLogins = new Set(localEvents.map((event) => String(event.email || "").toLowerCase()).filter(Boolean)).size;
-  const localAdmins = localUsers.filter((user) => isUserAdmin(user)).length;
-
   const statsResult = await apiRequest("/stats/logins");
   const usersResult = await apiRequest("/admin/users");
 
-  if (!statsResult.ok && !usersResult.ok) {
+  if (!statsResult.ok || !usersResult.ok) {
     serverOnline = false;
     setStats({
-      totalUsers: localUsers.length,
-      totalAdmins: localAdmins,
-      uniqueLogins: localUniqueLogins,
+      totalUsers: 0,
+      totalAdmins: 0,
+      uniqueLogins: 0,
     });
-    showStatus("Server offline. Showing local-mode login stats.");
+    showStatus("Admin service is unavailable right now.");
     return;
   }
 
   serverOnline = true;
   const stats = statsResult.ok ? statsResult.data.stats || {} : {};
   const serverUsers = usersResult.ok ? usersResult.data.users || [] : [];
-  if (usersResult.ok) {
-    cachedServerUsers = serverUsers;
-  }
+  cachedServerUsers = serverUsers;
   const serverAdminCount = serverUsers.filter((user) => isUserAdmin(user)).length;
 
   setStats({
-    totalUsers: (Number(stats.total_registered_users) || serverUsers.length || 0) + localUsers.length,
-    totalAdmins: serverAdminCount + localAdmins,
-    uniqueLogins: (Number(stats.unique_users_logged_in) || 0) + localUniqueLogins,
+    totalUsers: Number(stats.total_registered_users) || serverUsers.length || 0,
+    totalAdmins: serverAdminCount,
+    uniqueLogins: Number(stats.unique_users_logged_in) || 0,
   });
 }
 
@@ -1274,11 +1132,12 @@ async function refreshUsers() {
   const result = await apiRequest("/admin/users");
   if (!result.ok) {
     serverOnline = false;
-    cachedCombinedUsers = getCombinedUsers([]);
+    cachedServerUsers = [];
+    cachedCombinedUsers = [];
     renderUsers(cachedCombinedUsers);
     renderAdminRoleSection(cachedCombinedUsers);
     updateUserSearchPredictions();
-    showStatus("Server offline. Showing local-mode user logins.");
+    showStatus("Admin service is unavailable right now.");
     return;
   }
 
@@ -1347,13 +1206,10 @@ if (clearAllLoginsBtn) {
       return;
     }
 
-    saveLocalLoginEvents([]);
-
-    if (serverOnline) {
-      const result = await apiRequest("/admin/logins", { method: "DELETE" });
-      if (!result.ok) {
-        showStatus(result.message);
-      }
+    const result = await apiRequest("/admin/logins", { method: "DELETE" });
+    if (!result.ok) {
+      showStatus(result.message);
+      return;
     }
 
     await refreshStats();
@@ -1431,81 +1287,6 @@ async function handleUserAction(button) {
   const source = row?.dataset.source || "server";
 
   if (!action || !userId) {
-    return;
-  }
-
-  if (source === "local") {
-    const users = loadLocalUsers();
-    const events = loadLocalLoginEvents();
-    const target = users.find((user) => String(user.id) === userId);
-
-    if (!target) {
-      showStatus("Local-mode user not found.");
-      return;
-    }
-
-    if (action === "toggle-admin") {
-      const nextIsAdmin = !isUserAdmin(target);
-      const confirmed = await confirmAdminRoleChange(target.fullname, nextIsAdmin);
-      if (!confirmed) {
-        return;
-      }
-
-      const nextUsers = users.map((user) => {
-        if (String(user.id) !== userId) {
-          return user;
-        }
-        return {
-          ...user,
-          isAdmin: nextIsAdmin,
-          is_admin: nextIsAdmin ? 1 : 0,
-        };
-      });
-
-      saveLocalUsers(nextUsers);
-      await refreshUsers();
-      showStatus(nextIsAdmin ? "User promoted to admin (local mode)." : "Admin access removed (local mode).");
-      return;
-    }
-
-    if (action === "delete-user") {
-      const confirmed = window.confirm("Delete this local-mode user and login history?");
-      if (!confirmed) {
-        return;
-      }
-
-      const nextUsers = users.filter((user) => String(user.id) !== userId);
-      const nextEvents = events.filter((event) => {
-        const sameId = String(event.userId || "") === userId;
-        const sameEmail = String(event.email || "").toLowerCase() === String(target.email || "").toLowerCase();
-        return !sameId && !sameEmail;
-      });
-
-      saveLocalUsers(nextUsers);
-      saveLocalLoginEvents(nextEvents);
-      await refreshUsers();
-      await refreshStats();
-      showStatus("Local-mode user deleted.");
-      return;
-    }
-
-    if (action === "clear-logins") {
-      const confirmed = window.confirm("Delete local-mode login history for this user?");
-      if (!confirmed) {
-        return;
-      }
-
-      const nextEvents = events.filter((event) => {
-        const sameId = String(event.userId || "") === userId;
-        const sameEmail = String(event.email || "").toLowerCase() === String(target.email || "").toLowerCase();
-        return !sameId && !sameEmail;
-      });
-
-      saveLocalLoginEvents(nextEvents);
-      await refreshUsers();
-      await refreshStats();
-      showStatus("Local-mode login history deleted.");
-    }
     return;
   }
 

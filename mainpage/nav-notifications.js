@@ -16,26 +16,7 @@
     return;
   }
 
-  const currentHost = window.location.hostname || "127.0.0.1";
-  const currentProtocol = String(window.location.protocol || "").toLowerCase();
-  const currentPort = String(window.location.port || "");
-  const currentOriginApiBase =
-    ["http:", "https:"].includes(currentProtocol) && window.location.origin
-      ? `${window.location.origin}/api`
-      : "";
-  const localApiBases = [
-    `http://${currentHost}:3000/api`,
-    "http://127.0.0.1:3000/api",
-    "http://localhost:3000/api",
-  ];
-  const preferLocalApi =
-    ["127.0.0.1", "localhost"].includes(String(currentHost).toLowerCase()) &&
-    currentPort &&
-    currentPort !== "3000";
-  const API_BASE_CANDIDATES = (preferLocalApi
-    ? [...localApiBases, currentOriginApiBase]
-    : [currentOriginApiBase, ...localApiBases]
-  ).filter((value, index, array) => value && array.indexOf(value) === index);
+  const API_BASE = "/api";
 
   let activeSessionUser = null;
   let notificationItems = [];
@@ -180,7 +161,6 @@
   }
 
   async function apiRequest(path, options = {}) {
-    let lastError = null;
     const storedUser = getCurrentUserRecord();
     const authToken = getStoredAuthToken(storedUser);
     const baseHeaders = {
@@ -192,35 +172,31 @@
       baseHeaders["X-HNI-Auth-Token"] = authToken;
     }
 
-    for (const apiBase of API_BASE_CANDIDATES) {
+    try {
+      const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: baseHeaders,
+      });
+      let data = {};
       try {
-        const response = await fetch(`${apiBase}${path}`, {
-          ...options,
-          headers: baseHeaders,
-        });
-        let data = {};
-        try {
-          data = await response.json();
-        } catch {
-          data = {};
-        }
-
-        if (!response.ok) {
-          return { ok: false, message: data.message || "Request failed.", data };
-        }
-
-        return { ok: true, data };
-      } catch (error) {
-        lastError = error;
+        data = await response.json();
+      } catch {
+        data = {};
       }
-    }
 
-    return {
-      ok: false,
-      offline: true,
-      message: "Chat notifications are offline.",
-      details: lastError ? String(lastError.message || lastError) : "",
-    };
+      if (!response.ok) {
+        return { ok: false, message: data.message || "Request failed.", data };
+      }
+
+      return { ok: true, data };
+    } catch (error) {
+      return {
+        ok: false,
+        offline: true,
+        message: "Chat notifications are unavailable right now.",
+        details: error ? String(error.message || error) : "",
+      };
+    }
   }
 
   function syncStoredUser(serverUser, storedUser) {
