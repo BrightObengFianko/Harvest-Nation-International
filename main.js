@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   const API_BASE = "/api";
   const CURRENT_USER_KEY = "hni_current_user";
+  const REMEMBERED_ACCOUNTS_KEY = "hni_remembered_accounts_v1";
   const MAINPAGE_ROOT_PATH = "/bright/mainpage/mainpage.html";
 
   function showMessage(container, message, type = "error") {
@@ -98,6 +99,77 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  function getCurrentUserRecord() {
+    try {
+      const raw = window.localStorage.getItem(CURRENT_USER_KEY);
+      if (!raw) {
+        return null;
+      }
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function isValidSignedInUser(user) {
+    if (!user || typeof user !== "object") {
+      return false;
+    }
+
+    return Boolean(
+      String(user.id || "").trim() ||
+        String(user.email || "").trim() ||
+        String(user.fullname || "").trim()
+    );
+  }
+
+  function normalizeEmail(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function loadRememberedAccounts() {
+    try {
+      const raw = window.localStorage.getItem(REMEMBERED_ACCOUNTS_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.filter((item) => item && typeof item === "object") : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveRememberedAccounts(accounts) {
+    try {
+      window.localStorage.setItem(REMEMBERED_ACCOUNTS_KEY, JSON.stringify(accounts));
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  function rememberAccount(user) {
+    const email = normalizeEmail(user?.email);
+    if (!email) {
+      return;
+    }
+
+    const currentAccounts = loadRememberedAccounts();
+    const nextAccounts = [
+      {
+        email,
+        fullname: String(user?.fullname || "").trim(),
+        updated_at: new Date().toISOString(),
+      },
+      ...currentAccounts.filter((item) => normalizeEmail(item?.email) !== email),
+    ].slice(0, 6);
+
+    saveRememberedAccounts(nextAccounts);
+  }
+
+  function getMostRecentRememberedAccount() {
+    const accounts = loadRememberedAccounts();
+    return accounts.length > 0 ? accounts[0] : null;
+  }
+
   function completeAuthSuccess(user) {
     if (!user) {
       return;
@@ -105,6 +177,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     clearLegacyLocalAuthData();
     window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    rememberAccount(user);
   }
 
   async function requestJSON(path, payload) {
@@ -181,6 +254,51 @@ document.addEventListener("DOMContentLoaded", function () {
 
       void runAction(event);
     });
+  }
+
+  function maybeRedirectSignedInUser() {
+    const currentUser = getCurrentUserRecord();
+    if (!isValidSignedInUser(currentUser)) {
+      return false;
+    }
+
+    prepareMainPageLink();
+    performPostAuthRedirect();
+    return true;
+  }
+
+  function applyRememberedAccountDefaults() {
+    const remembered = getMostRecentRememberedAccount();
+    if (!remembered) {
+      return;
+    }
+
+    const loginEmailInput = document.getElementById("username");
+    const signupNameInput = document.getElementById("fullname");
+    const signupEmailInput = document.getElementById("signupEmail");
+    const forgotEmailInput = document.getElementById("forgotEmail");
+
+    if (loginEmailInput && !String(loginEmailInput.value || "").trim()) {
+      loginEmailInput.value = remembered.email || "";
+    }
+
+    if (signupEmailInput && !String(signupEmailInput.value || "").trim()) {
+      signupEmailInput.value = remembered.email || "";
+    }
+
+    if (signupNameInput && !String(signupNameInput.value || "").trim()) {
+      signupNameInput.value = String(remembered.fullname || "").trim();
+    }
+
+    if (forgotEmailInput && !String(forgotEmailInput.value || "").trim()) {
+      forgotEmailInput.value = remembered.email || "";
+    }
+  }
+
+  prepareMainPageLink();
+  applyRememberedAccountDefaults();
+  if (maybeRedirectSignedInUser()) {
+    return;
   }
 
   const loginForm = document.getElementById("loginForm");
