@@ -38,6 +38,7 @@ const mainStage = document.querySelector(".content-grid .main-stage");
 const COMMENTS_STORAGE_KEY = "hni_mainpage_comments_v1";
 const VIDEO_STORAGE_KEY = "hni_video_playlist_v1";
 const ACTIVE_VIDEO_KEY = "hni_active_video_id_v1";
+const VIDEO_ENGAGEMENT_STORAGE_KEY = "hni_video_engagement_v1";
 const WEEKLY_CONTENT_STORAGE_KEY = "hni_weekly_content_v1";
 const CURRENT_USER_KEY = "hni_current_user";
 const GUEST_REACTOR_KEY = "hni_guest_reactor_key_v1";
@@ -497,15 +498,111 @@ function normalizeUserReactions(rawUserReactions) {
   return normalized;
 }
 
-function updateCounter(counterElement, delta) {
+function getCounterBaseCount(counterElement) {
+  if (!counterElement) {
+    return 0;
+  }
+
+  if (!counterElement.dataset.base) {
+    counterElement.dataset.base = counterElement.dataset.count || counterElement.textContent?.trim() || "0";
+  }
+
+  return Math.max(Number(counterElement.dataset.base || "0"), 0);
+}
+
+function setCounter(counterElement, value) {
   if (!counterElement) {
     return;
   }
 
-  const current = Number(counterElement.dataset.count || "0");
-  const next = Math.max(current + delta, 0);
-  counterElement.dataset.count = String(next);
-  counterElement.textContent = formatCompact(next);
+  const safeValue = Math.max(Number(value) || 0, 0);
+  counterElement.dataset.count = String(safeValue);
+  counterElement.textContent = formatCompact(safeValue);
+}
+
+function normalizeVideoEngagementItem(rawItem) {
+  const source = rawItem && typeof rawItem === "object" ? rawItem : {};
+  return {
+    likedBy: normalizeLikedBy(source.likedBy),
+    shareCount: Math.max(Number(source.shareCount) || 0, 0),
+  };
+}
+
+function saveVideoEngagementStore(store) {
+  try {
+    window.localStorage.setItem(VIDEO_ENGAGEMENT_STORAGE_KEY, JSON.stringify(store));
+  } catch {
+    // Ignore storage failures (private mode, quota, etc.).
+  }
+}
+
+function loadVideoEngagementStore() {
+  try {
+    const raw = window.localStorage.getItem(VIDEO_ENGAGEMENT_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+
+    return Object.entries(parsed).reduce((acc, [videoId, item]) => {
+      const cleanVideoId = String(videoId || "").trim();
+      if (!cleanVideoId) {
+        return acc;
+      }
+
+      acc[cleanVideoId] = normalizeVideoEngagementItem(item);
+      return acc;
+    }, {});
+  } catch {
+    return {};
+  }
+}
+
+function getVideoEngagement(videoId = currentActiveVideo?.id || "") {
+  const cleanVideoId = String(videoId || "").trim();
+  if (!cleanVideoId) {
+    return normalizeVideoEngagementItem();
+  }
+
+  const store = loadVideoEngagementStore();
+  return normalizeVideoEngagementItem(store[cleanVideoId]);
+}
+
+function updateVideoEngagement(videoId, updater) {
+  const cleanVideoId = String(videoId || "").trim();
+  if (!cleanVideoId || typeof updater !== "function") {
+    return normalizeVideoEngagementItem();
+  }
+
+  const store = loadVideoEngagementStore();
+  const currentEngagement = normalizeVideoEngagementItem(store[cleanVideoId]);
+  const nextEngagement = normalizeVideoEngagementItem(updater(currentEngagement));
+  store[cleanVideoId] = nextEngagement;
+  saveVideoEngagementStore(store);
+  return nextEngagement;
+}
+
+function renderVideoEngagement(videoId = currentActiveVideo?.id || "") {
+  const cleanVideoId = String(videoId || "").trim();
+  const engagement = getVideoEngagement(cleanVideoId);
+  const reactorKey = getCurrentReactorKey();
+  const baseLikeCount = getCounterBaseCount(likeCount);
+  const baseShareCount = getCounterBaseCount(shareCount);
+
+  setCounter(likeCount, baseLikeCount + engagement.likedBy.length);
+  setCounter(shareCount, baseShareCount + engagement.shareCount);
+
+  if (likeBtn) {
+    likeBtn.classList.toggle("active", engagement.likedBy.includes(reactorKey));
+  }
+
+  if (shareBtn) {
+    shareBtn.classList.remove("active");
+  }
 }
 
 function getFullscreenElement() {
@@ -903,6 +1000,7 @@ function applyVideoSelection(video) {
   storedComments = loadComments(video.id);
   showAllComments = false;
   renderVideoPlayer(video);
+  renderVideoEngagement(video.id);
   updateDownloadOptionAvailability();
 
   if (videoTitle) {
@@ -1805,8 +1903,25 @@ if (siteHeader) {
 
 if (likeBtn && likeCount) {
   likeBtn.addEventListener("click", () => {
-    likeBtn.classList.add("active");
-    updateCounter(likeCount, 1);
+    if (!currentActiveVideo?.id) {
+      showMessage("No active video to like.");
+      return;
+    }
+
+    const reactorKey = getCurrentReactorKey();
+    const engagement = getVideoEngagement(currentActiveVideo.id);
+
+    if (engagement.likedBy.includes(reactorKey)) {
+      likeBtn.classList.add("active");
+      showMessage("You already liked this video.");
+      return;
+    }
+
+    updateVideoEngagement(currentActiveVideo.id, (current) => ({
+      ...current,
+      likedBy: [...current.likedBy, reactorKey],
+    }));
+    renderVideoEngagement(currentActiveVideo.id);
     showMessage("Thanks for liking this message.");
   });
 }
@@ -1823,8 +1938,14 @@ if (shareBtn && shareCount) {
     if (navigator.share) {
       try {
         await navigator.share(shareData);
+        if (currentActiveVideo?.id) {
+          updateVideoEngagement(currentActiveVideo.id, (current) => ({
+            ...current,
+            shareCount: current.shareCount + 1,
+          }));
+          renderVideoEngagement(currentActiveVideo.id);
+        }
         shareBtn.classList.add("active");
-        updateCounter(shareCount, 1);
         showMessage("Video shared successfully.");
         return;
       } catch (error) {
@@ -1837,8 +1958,14 @@ if (shareBtn && shareCount) {
 
     const copied = await copyLinkFallback(videoUrl);
     if (copied) {
+      if (currentActiveVideo?.id) {
+        updateVideoEngagement(currentActiveVideo.id, (current) => ({
+          ...current,
+          shareCount: current.shareCount + 1,
+        }));
+        renderVideoEngagement(currentActiveVideo.id);
+      }
       shareBtn.classList.add("active");
-      updateCounter(shareCount, 1);
       showMessage("Video link copied. You can now paste and share.");
       return;
     }

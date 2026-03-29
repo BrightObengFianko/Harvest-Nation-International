@@ -891,13 +891,14 @@ a {
 }
 
 .video-wrapper #video-player-slot {
-  min-height: 280px;
+  min-height: clamp(320px, 38vw, 520px);
 }
 
 .video-wrapper .video-player {
   aspect-ratio: 16 / 9;
   border: 0;
   display: block;
+  min-height: clamp(320px, 38vw, 520px);
   width: 100%;
 }
 
