@@ -2073,9 +2073,10 @@ a {
   }
 
   .site-nav a {
-    display: inline-flex;
+    display: flex;
+    justify-content: flex-start;
     max-width: 100%;
-    width: fit-content;
+    width: 100%;
   }
 
   .mobile-auth-links[hidden],
@@ -2152,9 +2153,10 @@ a {
     border-top: 1px solid rgba(233, 243, 255, 0.16);
     display: grid;
     gap: 8px;
-    justify-items: start;
+    justify-items: stretch;
     margin-top: 6px;
     padding-top: 12px;
+    width: 100%;
   }
 
   .mobile-auth-links .btn {
@@ -2430,12 +2432,13 @@ a {
   }
 
   .mobile-auth-links {
-    justify-items: start;
+    justify-items: stretch;
   }
 
+  .site-nav a,
   .mobile-auth-links .btn {
-    text-align: center;
-    width: fit-content;
+    text-align: left;
+    width: 100%;
   }
 
   .card-header {

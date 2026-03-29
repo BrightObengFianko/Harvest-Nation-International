@@ -7,6 +7,10 @@ const chatUserList = document.querySelector("#chat-user-list");
 const chatUserEmptyState = document.querySelector("#chat-user-empty-state");
 const chatThreadHead = document.querySelector("#chat-thread-head");
 const chatThreadBackBtn = document.querySelector("#chat-thread-back-btn");
+const chatThreadAvatar = document.querySelector("#chat-thread-avatar");
+const chatThreadAvatarImage = document.querySelector("#chat-thread-avatar-image");
+const chatThreadAvatarIcon = document.querySelector("#chat-thread-avatar-icon");
+const chatThreadAvatarFallback = document.querySelector("#chat-thread-avatar-fallback");
 const chatThreadTitle = document.querySelector("#chat-thread-title");
 const chatThreadSubtitle = document.querySelector("#chat-thread-subtitle");
 const chatThreadEmptyState = document.querySelector("#chat-thread-empty-state");
@@ -586,6 +590,39 @@ function getActivePeerUser() {
   return availableUsers.find((user) => Number(user.id) === Number(activeChannel.peerUserId)) || null;
 }
 
+function updateThreadAvatar(user = null, options = {}) {
+  if (!chatThreadAvatar || !chatThreadAvatarImage || !chatThreadAvatarIcon || !chatThreadAvatarFallback) {
+    return;
+  }
+
+  const iconClass = String(options.iconClass || "fa-regular fa-user");
+  const avatarUrl = user ? getUserProfileImage(user) : "";
+  const initials = user ? getUserInitials(user) : "";
+
+  if (avatarUrl) {
+    chatThreadAvatarImage.src = avatarUrl;
+    chatThreadAvatarImage.hidden = false;
+    chatThreadAvatarIcon.hidden = true;
+    chatThreadAvatarFallback.hidden = true;
+    return;
+  }
+
+  chatThreadAvatarImage.removeAttribute("src");
+  chatThreadAvatarImage.hidden = true;
+
+  if (initials) {
+    chatThreadAvatarFallback.textContent = initials;
+    chatThreadAvatarFallback.hidden = false;
+    chatThreadAvatarIcon.hidden = true;
+    return;
+  }
+
+  chatThreadAvatarFallback.textContent = "U";
+  chatThreadAvatarFallback.hidden = true;
+  chatThreadAvatarIcon.className = `${iconClass} chat-thread-avatar-icon`;
+  chatThreadAvatarIcon.hidden = false;
+}
+
 function updateThreadHeader() {
   if (!chatThreadTitle || !chatThreadSubtitle) {
     return;
@@ -594,6 +631,7 @@ function updateThreadHeader() {
   if (activeChannel.scope === "all") {
     chatThreadTitle.textContent = "All Users Room";
     chatThreadSubtitle.textContent = "Message everyone who has logged in.";
+    updateThreadAvatar(null, { iconClass: "fa-solid fa-users" });
     return;
   }
 
@@ -602,16 +640,19 @@ function updateThreadHeader() {
     if (!peerUser) {
       chatThreadTitle.textContent = "Direct Chat";
       chatThreadSubtitle.textContent = "Select a user to start chatting.";
+      updateThreadAvatar(null, { iconClass: "fa-regular fa-user" });
       return;
     }
 
     chatThreadTitle.textContent = getDisplayName(peerUser);
     chatThreadSubtitle.textContent = String(peerUser.email || "").trim() || "Private conversation";
+    updateThreadAvatar(peerUser);
     return;
   }
 
   chatThreadTitle.textContent = "Start a conversation";
   chatThreadSubtitle.textContent = "Pick a chat on the left to begin.";
+  updateThreadAvatar(null, { iconClass: "fa-regular fa-comments" });
 }
 
 function getConversationPreview(user) {
