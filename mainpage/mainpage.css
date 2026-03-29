@@ -97,8 +97,9 @@ a {
   color: #ffffff;
   cursor: pointer;
   display: none;
-  font-size: 1.15rem;
+  font-size: 1.32rem;
   justify-self: end;
+  line-height: 1;
 }
 
 .site-nav {
@@ -356,6 +357,17 @@ a {
   width: 100%;
 }
 
+.account-toggle-image[hidden],
+.account-toggle-icon[hidden],
+.account-avatar-image[hidden],
+.account-avatar-icon[hidden],
+.mobile-account-toggle-image[hidden],
+.mobile-account-toggle-icon[hidden],
+.mobile-account-avatar-image[hidden],
+.mobile-account-avatar-icon[hidden] {
+  display: none !important;
+}
+
 .account-toggle-icon {
   font-size: 0.95rem;
 }
@@ -375,9 +387,9 @@ a {
   border-radius: 22px;
   box-shadow: 0 20px 40px rgba(8, 26, 45, 0.22);
   color: var(--ink-900);
-  max-width: min(520px, calc(100vw - 40px));
-  min-width: min(340px, calc(100vw - 40px));
-  width: fit-content;
+  max-width: min(420px, calc(100vw - 40px));
+  min-width: min(320px, calc(100vw - 40px));
+  width: min(420px, calc(100vw - 40px));
   padding: 18px 18px 16px;
   position: absolute;
   right: 0;
@@ -401,7 +413,8 @@ a {
   align-items: center;
   display: grid;
   gap: 16px;
-  grid-template-columns: 92px auto;
+  grid-template-columns: 92px minmax(0, 1fr);
+  width: 100%;
 }
 
 .account-avatar-wrap {
@@ -462,8 +475,9 @@ a {
 }
 
 .account-details {
-  max-width: min(360px, calc(100vw - 180px));
-  min-width: max-content;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
 }
 
 .account-label {
@@ -2026,14 +2040,14 @@ a {
   .menu-toggle {
     align-items: center;
     display: inline-flex;
-    height: 36px;
+    height: 42px;
     justify-content: center;
     padding: 0;
     position: absolute;
     right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    width: 36px;
+    width: 42px;
     z-index: 3;
   }
 
@@ -2175,7 +2189,9 @@ a {
     display: grid;
     gap: 10px;
     margin-top: 4px;
+    max-width: 100%;
     padding: 12px;
+    width: 100%;
   }
 
   .mobile-account-top {
@@ -2228,7 +2244,8 @@ a {
     align-items: center;
     display: grid;
     gap: 12px;
-    grid-template-columns: 60px 1fr;
+    grid-template-columns: 60px minmax(0, 1fr);
+    width: 100%;
   }
 
   .mobile-account-avatar {
@@ -2393,9 +2410,9 @@ a {
   }
 
   .menu-toggle {
-    height: 34px;
+    height: 40px;
     right: 10px;
-    width: 34px;
+    width: 40px;
   }
 
   .hero {
