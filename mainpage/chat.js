@@ -20,8 +20,8 @@ const CURRENT_USER_KEY = "hni_current_user";
 const ACCOUNT_PROFILE_STORAGE_KEY = "hni_account_profiles_v1";
 const CHAT_NOTIFICATION_SEEN_KEY = "hni_chat_notification_seen_v1";
 const CHAT_READ_STATE_KEY = "hni_chat_read_state_v1";
-const POLL_MESSAGES_MS = 4000;
-const POLL_USERS_MS = 20000;
+const POLL_MESSAGES_MS = 1500;
+const POLL_USERS_MS = 5000;
 const SEARCH_SUGGEST_DEBOUNCE_MS = 260;
 const USER_SEARCH_RESULTS_LIMIT = 1000;
 const DEFAULT_COMPOSER_PLACEHOLDER = "Type your message here...";
@@ -996,6 +996,7 @@ async function refreshMessages(forceScroll = false) {
   if (needsRender) {
     renderMessages(messages);
     lastRenderedSignature = signature;
+    void refreshUsers();
   }
 
   if (activeChannel.scope === "direct" && activeChannel.peerUserId) {
@@ -1269,6 +1270,21 @@ function setupChatEvents() {
   }
 
   window.addEventListener("resize", syncMobileChatView);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") {
+      return;
+    }
+    void refreshUsers();
+    if (activeChannel.scope !== "none") {
+      void refreshMessages(false);
+    }
+  });
+  window.addEventListener("focus", () => {
+    void refreshUsers();
+    if (activeChannel.scope !== "none") {
+      void refreshMessages(false);
+    }
+  });
 
   if (chatLogoutBtn) {
     chatLogoutBtn.addEventListener("click", () => {
