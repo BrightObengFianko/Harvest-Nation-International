@@ -40,6 +40,10 @@
   let activeSessionUser = null;
   let notificationItems = [];
   let pollingTimerId = null;
+  let notificationSoundEnabled = false;
+  let notificationSoundContext = null;
+  let notificationStateReady = false;
+  let lastUnreadSignature = "";
 
   function getCurrentUserRecord() {
     try {
@@ -64,6 +68,10 @@
         String(user.email || "").trim() ||
         String(user.fullname || "").trim()
     );
+  }
+
+  function getStoredAuthToken(user = getCurrentUserRecord()) {
+    return String(user?.auth_token || user?.token || "").trim();
   }
 
   function parsePositiveInteger(value) {
@@ -125,6 +133,28 @@
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
+  function isUnreadNotification(item, user) {
+    const createdAt = Date.parse(String(item?.created_at || ""));
+    return Number.isFinite(createdAt) && createdAt > getSeenTimestamp(user);
+  }
+
+  function getUnreadItems(items = notificationItems, user = activeSessionUser) {
+    if (!user) {
+      return [];
+    }
+
+    return items.filter((item) => isUnreadNotification(item, user));
+  }
+
+  function getLatestUnreadSignature(items = notificationItems, user = activeSessionUser) {
+    const latestUnread = getUnreadItems(items, user)[0];
+    if (!latestUnread) {
+      return "";
+    }
+
+    return `${latestUnread.id || "0"}:${latestUnread.created_at || ""}`;
+  }
+
   function setSeenTimestamp(user, value) {
     const key = getSeenStorageKey(user);
     if (!key) {
@@ -151,10 +181,23 @@
 
   async function apiRequest(path, options = {}) {
     let lastError = null;
+    const storedUser = getCurrentUserRecord();
+    const authToken = getStoredAuthToken(storedUser);
+    const baseHeaders = {
+      ...(options.headers || {}),
+    };
+
+    if (authToken) {
+      baseHeaders.Authorization = `Bearer ${authToken}`;
+      baseHeaders["X-HNI-Auth-Token"] = authToken;
+    }
 
     for (const apiBase of API_BASE_CANDIDATES) {
       try {
-        const response = await fetch(`${apiBase}${path}`, options);
+        const response = await fetch(`${apiBase}${path}`, {
+          ...options,
+          headers: baseHeaders,
+        });
         let data = {};
         try {
           data = await response.json();
@@ -190,6 +233,9 @@
           fullname: serverUser.fullname,
           email: serverUser.email,
           is_admin: serverUser.is_admin,
+          auth_token:
+            String(serverUser.auth_token || "").trim() ||
+            String(storedUser?.auth_token || storedUser?.token || "").trim(),
         })
       );
     } catch {
@@ -198,50 +244,16 @@
   }
 
   async function resolveNotificationUser(storedUser) {
-    const params = new URLSearchParams();
-    const userId = parsePositiveInteger(storedUser?.id);
-    const email = String(storedUser?.email || "").trim();
-
-    if (userId) {
-      params.set("userId", String(userId));
-    }
-    if (email) {
-      params.set("email", email);
-    }
-    if (!params.toString()) {
-      return { ok: false, message: "No valid account found." };
+    const authToken = getStoredAuthToken(storedUser);
+    if (!authToken) {
+      return { ok: false, message: "Please sign in again to load chat notifications." };
     }
 
-    const result = await apiRequest(`/chat/session-user?${params.toString()}`);
+    const result = await apiRequest("/chat/session-user");
     if (result.ok && result.data?.user) {
       syncStoredUser(result.data.user, storedUser);
       return result;
     }
-
-    if (result.offline) {
-      return result;
-    }
-
-    if (!email) {
-      return result;
-    }
-
-    const ensured = await apiRequest("/chat/session-user/ensure", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        fullname: getDisplayName(storedUser),
-      }),
-    });
-
-    if (ensured.ok && ensured.data?.user) {
-      syncStoredUser(ensured.data.user, storedUser);
-      return ensured;
-    }
-
     return result;
   }
 
@@ -251,7 +263,6 @@
     }
 
     const params = new URLSearchParams();
-    params.set("currentUserId", String(activeSessionUser.id));
     params.set("limit", String(NOTIFICATION_LIMIT));
     return apiRequest(`/chat/notifications?${params.toString()}`);
   }
@@ -267,15 +278,86 @@
   }
 
   function getUnreadCount() {
-    if (!activeSessionUser) {
-      return 0;
+    return getUnreadItems().length;
+  }
+
+  function ensureNotificationSoundContext() {
+    if (notificationSoundContext) {
+      return notificationSoundContext;
     }
 
-    const seenTimestamp = getSeenTimestamp(activeSessionUser);
-    return notificationItems.filter((item) => {
-      const createdAt = Date.parse(String(item?.created_at || ""));
-      return Number.isFinite(createdAt) && createdAt > seenTimestamp;
-    }).length;
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) {
+      return null;
+    }
+
+    try {
+      notificationSoundContext = new AudioContextCtor();
+    } catch {
+      notificationSoundContext = null;
+    }
+
+    return notificationSoundContext;
+  }
+
+  async function playNotificationSound() {
+    if (!notificationSoundEnabled) {
+      return;
+    }
+
+    const context = ensureNotificationSoundContext();
+    if (!context) {
+      return;
+    }
+
+    try {
+      if (context.state === "suspended") {
+        await context.resume();
+      }
+
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
+      const now = context.currentTime;
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, now);
+      oscillator.frequency.exponentialRampToValueAtTime(660, now + 0.18);
+
+      gainNode.gain.setValueAtTime(0.0001, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.26);
+    } catch {
+      // Ignore audio failures.
+    }
+  }
+
+  function armNotificationSound() {
+    notificationSoundEnabled = true;
+    const context = ensureNotificationSoundContext();
+    if (context && context.state === "suspended") {
+      context.resume().catch(() => {});
+    }
+  }
+
+  function maybePlayNotificationSound(nextItems) {
+    const nextUnreadSignature = getLatestUnreadSignature(nextItems, activeSessionUser);
+    const shouldPlay =
+      notificationStateReady &&
+      Boolean(nextUnreadSignature) &&
+      nextUnreadSignature !== lastUnreadSignature &&
+      document.visibilityState === "visible";
+
+    lastUnreadSignature = nextUnreadSignature;
+    notificationStateReady = true;
+
+    if (shouldPlay) {
+      playNotificationSound();
+    }
   }
 
   function updateBadge() {
@@ -307,8 +389,7 @@
       button.type = "button";
       button.className = "notification-item";
 
-      const createdAt = Date.parse(String(item?.created_at || ""));
-      const unread = Number.isFinite(createdAt) && createdAt > getSeenTimestamp(activeSessionUser);
+      const unread = isUnreadNotification(item, activeSessionUser);
       if (unread) {
         button.classList.add("unread");
       }
@@ -357,6 +438,7 @@
 
     const latestTimestamp = notificationItems[0]?.created_at || new Date().toISOString();
     setSeenTimestamp(activeSessionUser, latestTimestamp);
+    lastUnreadSignature = getLatestUnreadSignature(notificationItems, activeSessionUser);
     renderNotifications();
   }
 
@@ -385,12 +467,15 @@
     const result = await fetchNotifications();
     if (!result.ok) {
       notificationItems = [];
+      lastUnreadSignature = "";
       renderNotifications();
       updateEmptyState(result.offline ? "Chat notifications are offline." : (result.message || "Unable to load chat notifications."));
       return;
     }
 
-    notificationItems = Array.isArray(result.data?.notifications) ? result.data.notifications : [];
+    const nextItems = Array.isArray(result.data?.notifications) ? result.data.notifications : [];
+    maybePlayNotificationSound(nextItems);
+    notificationItems = nextItems;
     renderNotifications();
 
     if (!notificationMenu.hidden) {
@@ -419,10 +504,19 @@
     if (!signedIn) {
       activeSessionUser = null;
       notificationItems = [];
+      lastUnreadSignature = "";
+      notificationStateReady = false;
       closeNotificationMenu();
       stopPolling();
     }
   }
+
+  ["pointerdown", "touchstart", "keydown"].forEach((eventName) => {
+    document.addEventListener(eventName, armNotificationSound, {
+      passive: true,
+      once: true,
+    });
+  });
 
   notificationToggle.addEventListener("click", (event) => {
     event.preventDefault();

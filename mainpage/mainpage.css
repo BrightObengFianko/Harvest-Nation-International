@@ -2297,6 +2297,10 @@ a {
     display: none !important;
   }
 
+  .chat-float-badge:not([hidden]) {
+    display: inline-flex !important;
+  }
+
   .chat-float-badge {
     align-items: center;
     background: var(--accent-red);
