@@ -27,6 +27,7 @@ const USER_SEARCH_RESULTS_LIMIT = 1000;
 const DEFAULT_COMPOSER_PLACEHOLDER = "Type your message here...";
 const INACTIVE_COMPOSER_PLACEHOLDER = "Select a user on the left to start chatting...";
 const MOBILE_CHAT_BREAKPOINT = 760;
+const VIEWPORT_HEIGHT_CSS_VAR = "--chat-viewport-height";
 
 const API_BASE = "/api";
 
@@ -140,6 +141,28 @@ function syncMobileChatView() {
   const showThread =
     isPhoneChatLayout() && mobileChatView === "thread" && activeChannel.scope !== "none";
   document.body.classList.toggle("chat-mobile-thread-open", showThread);
+}
+
+function syncChatViewportHeight() {
+  const root = document.documentElement;
+  if (!root) {
+    return;
+  }
+
+  const visualViewport = window.visualViewport;
+  const viewportHeight = Math.round(
+    visualViewport?.height || window.innerHeight || root.clientHeight || 0
+  );
+
+  if (viewportHeight > 0) {
+    root.style.setProperty(VIEWPORT_HEIGHT_CSS_VAR, `${viewportHeight}px`);
+  }
+
+  if (!visualViewport || visualViewport.height >= window.innerHeight - 8) {
+    window.requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
+  }
 }
 
 function openMobileChatList() {
@@ -1210,6 +1233,8 @@ async function handleSendMessage(event) {
   }
 
   chatMessageInput.value = "";
+  chatMessageInput.blur();
+  syncChatViewportHeight();
   await refreshMessages(true);
 }
 
@@ -1261,6 +1286,14 @@ function setupChatEvents() {
         handleSendMessage();
       }
     });
+
+    chatMessageInput.addEventListener("focus", () => {
+      syncChatViewportHeight();
+    });
+
+    chatMessageInput.addEventListener("blur", () => {
+      window.setTimeout(syncChatViewportHeight, 140);
+    });
   }
 
   if (chatThreadBackBtn) {
@@ -1269,17 +1302,28 @@ function setupChatEvents() {
     });
   }
 
-  window.addEventListener("resize", syncMobileChatView);
+  window.addEventListener("resize", () => {
+    syncMobileChatView();
+    syncChatViewportHeight();
+  });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", syncChatViewportHeight);
+    window.visualViewport.addEventListener("scroll", syncChatViewportHeight);
+  }
+
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") {
       return;
     }
+    syncChatViewportHeight();
     void refreshUsers();
     if (activeChannel.scope !== "none") {
       void refreshMessages(false);
     }
   });
   window.addEventListener("focus", () => {
+    syncChatViewportHeight();
     void refreshUsers();
     if (activeChannel.scope !== "none") {
       void refreshMessages(false);
@@ -1305,6 +1349,7 @@ function readScopeFromUrl() {
 }
 
 async function initChatPage() {
+  syncChatViewportHeight();
   setupChatEvents();
 
   const localUser = enforceAuth();

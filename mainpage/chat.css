@@ -16,6 +16,7 @@
   --chat-ink-soft: #5a7290;
   --chat-accent: #1948f2;
   --chat-accent-soft: #0d76f6;
+  --chat-viewport-height: 100dvh;
 }
 
 * {
@@ -37,19 +38,22 @@ body.chat-page-body {
   background: var(--chat-bg);
   color: var(--chat-ink);
   font-family: "Source Sans 3", sans-serif;
-  height: 100dvh;
-  min-height: 100dvh;
+  height: var(--chat-viewport-height);
+  inset: 0;
+  min-height: var(--chat-viewport-height);
   overflow: hidden;
   padding: 14px;
+  position: fixed;
+  width: 100%;
   -webkit-text-size-adjust: 100%;
 }
 
 .chat-layout {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  height: calc(100dvh - 28px);
+  height: calc(var(--chat-viewport-height) - 28px);
   margin: 0 auto;
-  max-height: calc(100dvh - 28px);
+  max-height: calc(var(--chat-viewport-height) - 28px);
   max-width: 1000px;
   min-height: 0;
   overflow: hidden;
@@ -722,15 +726,15 @@ body.chat-page-body {
 
 @media (max-width: 760px) {
   body.chat-page-body {
-    height: 100dvh;
-    min-height: 100dvh;
+    height: var(--chat-viewport-height);
+    min-height: var(--chat-viewport-height);
     overflow: hidden;
     padding: 10px;
   }
 
   .chat-layout {
-    height: calc(100dvh - 20px);
-    max-height: calc(100dvh - 20px);
+    height: calc(var(--chat-viewport-height) - 20px);
+    max-height: calc(var(--chat-viewport-height) - 20px);
     min-height: 0;
   }
 
@@ -916,8 +920,8 @@ body.chat-page-body {
   }
 
   .chat-layout {
-    height: calc(100dvh - 20px);
-    max-height: calc(100dvh - 20px);
+    height: calc(var(--chat-viewport-height) - 20px);
+    max-height: calc(var(--chat-viewport-height) - 20px);
     min-height: 0;
   }
 
