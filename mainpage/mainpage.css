@@ -760,11 +760,15 @@ a {
   border-radius: 999px;
   color: #ffffff;
   cursor: pointer;
+  display: inline-flex;
   font-family: "Oswald", sans-serif;
   font-size: 0.72rem;
+  grid-column: 1 / -1;
+  justify-content: center;
   letter-spacing: 0.06em;
   padding: 6px 11px;
   text-transform: uppercase;
+  width: 100%;
 }
 
 .lessons-video-play:hover {
@@ -2231,10 +2235,16 @@ a {
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 50%;
+    cursor: pointer;
     height: 60px;
     overflow: hidden;
     position: relative;
     width: 60px;
+  }
+
+  .mobile-account-avatar-btn {
+    appearance: none;
+    padding: 0;
   }
 
   .mobile-account-avatar-image {
@@ -2255,6 +2265,8 @@ a {
   }
 
   .mobile-account-details {
+    display: grid;
+    gap: 4px;
     min-width: 0;
   }
 
@@ -2271,6 +2283,25 @@ a {
     font-size: 0.82rem;
     margin-top: 4px;
     word-break: break-word;
+  }
+
+  .mobile-account-photo-btn {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    justify-self: start;
+    margin-top: 2px;
+    padding: 0;
+  }
+
+  .mobile-account-photo-btn:hover {
+    opacity: 0.82;
   }
 
   .mobile-account-confirm {
@@ -2478,8 +2509,8 @@ a {
   }
 
   .lessons-video-play {
-    justify-self: start;
-    width: fit-content;
+    justify-self: stretch;
+    width: 100%;
   }
 
   .lessons-more-link-wrap {

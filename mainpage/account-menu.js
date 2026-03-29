@@ -29,6 +29,8 @@
   const mobileAccountEmail = document.querySelector("#mobile-account-email");
   const mobileAccountAvatarImage = document.querySelector("#mobile-account-avatar-image");
   const mobileAccountAvatarIcon = document.querySelector("#mobile-account-avatar-icon");
+  const mobileAccountAvatarBtn = document.querySelector("#mobile-account-avatar-btn");
+  const mobileAccountPhotoBtn = document.querySelector("#mobile-account-photo-btn");
   const mobileAccountSignoutBtn = document.querySelector("#mobile-account-signout-btn");
   const mobileAccountSignoutWrap = document.querySelector(".mobile-account-signout-wrap");
   const mobileAccountLogoutConfirm = document.querySelector("#mobile-account-logout-confirm");
@@ -454,6 +456,22 @@
 
   if (accountPhotoBtn && accountAvatarInput) {
     accountPhotoBtn.addEventListener("click", () => {
+      accountAvatarInput.click();
+    });
+  }
+
+  if (mobileAccountAvatarBtn && accountAvatarInput) {
+    mobileAccountAvatarBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      accountAvatarInput.click();
+    });
+  }
+
+  if (mobileAccountPhotoBtn && accountAvatarInput) {
+    mobileAccountPhotoBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       accountAvatarInput.click();
     });
   }
