@@ -2,13 +2,19 @@ services:
   - type: web
     name: harvest-nation-international-bright-obeng-fianko
     env: node
-    plan: free
+    plan: starter
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/health
     autoDeploy: true
+    disk:
+      name: harvest-nation-data
+      mountPath: /var/data/hni
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: OWNER_ADMIN_EMAIL
         value: brightobengfianko@gmail.com
+      - key: APP_STORAGE_DIR
+        value: /var/data/hni

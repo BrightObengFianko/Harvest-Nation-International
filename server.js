@@ -32,7 +32,52 @@ const APP_STORAGE_DIR = process.env.APP_STORAGE_DIR
 const STATIC_BASE_PATH = "/bright";
 const MAINPAGE_ENTRY_PATH = `${STATIC_BASE_PATH}/mainpage/mainpage.html`;
 
+function directoryHasEntriesSync(targetDir) {
+  try {
+    return fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function copyDirectoryContentsSync(sourceDir, targetDir) {
+  if (!fs.existsSync(sourceDir)) {
+    return;
+  }
+
+  fs.mkdirSync(targetDir, { recursive: true });
+  const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+
+  entries.forEach((entry) => {
+    const sourcePath = path.join(sourceDir, entry.name);
+    const targetPath = path.join(targetDir, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDirectoryContentsSync(sourcePath, targetPath);
+      return;
+    }
+
+    if (!fs.existsSync(targetPath)) {
+      fs.copyFileSync(sourcePath, targetPath);
+    }
+  });
+}
+
+function migrateLegacyStorageDirectory(sourceDir, targetDir, label) {
+  if (APP_STORAGE_DIR === __dirname) {
+    return;
+  }
+
+  if (!fs.existsSync(sourceDir) || directoryHasEntriesSync(targetDir)) {
+    return;
+  }
+
+  copyDirectoryContentsSync(sourceDir, targetDir);
+  console.log(`Migrated legacy ${label} into persistent storage at ${targetDir}`);
+}
+
 const dataDir = path.join(APP_STORAGE_DIR, "data");
+migrateLegacyStorageDirectory(path.join(__dirname, "data"), dataDir, "database files");
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
@@ -40,6 +85,7 @@ if (!fs.existsSync(dataDir)) {
 const mediaRootDir = path.join(APP_STORAGE_DIR, "media");
 const mediaUploadDir = path.join(mediaRootDir, "uploads");
 const mediaConvertedDir = path.join(mediaRootDir, "converted");
+migrateLegacyStorageDirectory(path.join(__dirname, "media"), mediaRootDir, "media files");
 if (!fs.existsSync(mediaUploadDir)) {
   fs.mkdirSync(mediaUploadDir, { recursive: true });
 }
