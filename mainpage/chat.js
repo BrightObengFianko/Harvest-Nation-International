@@ -578,32 +578,6 @@ async function resolveSessionUser(storedUser) {
     syncStoredUser(result.data.user);
     return result;
   }
-
-  if (result.offline) {
-    return result;
-  }
-
-  const ensureEmail = String(storedUser?.email || "").trim();
-  if (!ensureEmail) {
-    return result;
-  }
-
-  const ensured = await apiRequest("/chat/session-user/ensure", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: ensureEmail,
-      fullname: getDisplayName(storedUser),
-    }),
-  });
-
-  if (ensured.ok && ensured.data?.user) {
-    syncStoredUser(ensured.data.user);
-    return ensured;
-  }
-
   return result;
 }
 

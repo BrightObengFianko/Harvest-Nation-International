@@ -655,66 +655,10 @@ app.get("/api/chat/session-user", async (req, res) => {
 });
 
 app.post("/api/chat/session-user/ensure", async (req, res) => {
-  const email = String(req.body?.email || "").trim().toLowerCase();
-  const fallbackName = String(req.body?.fullname || req.body?.username || "").trim();
-
-  if (!email) {
-    res.status(400).json({ ok: false, message: "Email is required." });
-    return;
-  }
-
-  if (!isValidEmailAddress(email)) {
-    res.status(400).json({ ok: false, message: "Enter a valid email address." });
-    return;
-  }
-
-  const derivedName = fallbackName || email.split("@")[0] || "Member";
-
-  try {
-    let user = await get("SELECT id, fullname, email, is_admin FROM users WHERE lower(email) = lower(?)", [email]);
-    if (!user) {
-      const seedPassword = `chat-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
-      const passwordHash = await bcrypt.hash(seedPassword, 10);
-      const inserted = await run(
-        "INSERT INTO users (fullname, email, password_hash) VALUES (?, ?, ?)",
-        [derivedName, email, passwordHash]
-      );
-      user = await get("SELECT id, fullname, email, is_admin FROM users WHERE id = ?", [inserted.lastID]);
-    }
-
-    res.status(201).json({
-      ok: true,
-      user: {
-        id: user.id,
-        fullname: user.fullname,
-        email: user.email,
-        is_admin: Number(user.is_admin) === 1,
-      },
-    });
-  } catch (error) {
-    const message = String(error?.message || "").toLowerCase();
-    if (message.includes("unique constraint failed") && message.includes("users.email")) {
-      try {
-        const existing = await get("SELECT id, fullname, email, is_admin FROM users WHERE lower(email) = lower(?)", [email]);
-        if (existing) {
-          res.status(200).json({
-            ok: true,
-            user: {
-              id: existing.id,
-              fullname: existing.fullname,
-              email: existing.email,
-              is_admin: Number(existing.is_admin) === 1,
-            },
-          });
-          return;
-        }
-      } catch {
-        // Fall through to generic server error.
-      }
-    }
-
-    res.status(500).json({ ok: false, message: "Server error while ensuring chat user." });
-  }
+  res.status(410).json({
+    ok: false,
+    message: "Chat account auto-creation has been removed. Please sign in with your account.",
+  });
 });
 
 app.get("/api/chat/users", async (req, res) => {
