@@ -779,10 +779,11 @@ a {
   font-size: 0.72rem;
   grid-column: 1 / -1;
   justify-content: center;
+  justify-self: flex-start;
   letter-spacing: 0.06em;
   padding: 6px 11px;
   text-transform: uppercase;
-  width: 100%;
+  width: fit-content;
 }
 
 .lessons-video-play:hover {
