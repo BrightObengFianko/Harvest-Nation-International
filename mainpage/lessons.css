@@ -271,11 +271,11 @@
 
 .lesson-viewer-player-wrap #video-player-slot {
   height: 100%;
-  min-height: clamp(460px, 44vw, 680px);
+  min-height: clamp(520px, 48vw, 760px);
 }
 
 .lesson-viewer-player-wrap .video-player {
-  min-height: clamp(460px, 44vw, 680px);
+  min-height: clamp(520px, 48vw, 760px);
 }
 
 .lesson-viewer-comments .comment-list {
@@ -411,11 +411,11 @@
   }
 
   .lesson-viewer-player-wrap #video-player-slot {
-    min-height: 300px;
+    min-height: 340px;
   }
 
   .lesson-viewer-player-wrap .video-player {
-    min-height: 300px;
+    min-height: 340px;
   }
 
   .lesson-viewer-comments {
