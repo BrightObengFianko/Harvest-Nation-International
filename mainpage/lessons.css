@@ -288,22 +288,27 @@
   padding-top: 12px;
 }
 
-.lesson-viewer-comments .comment-row {
+.lesson-viewer-comments .comment-row,
+.lesson-viewer-comments .lesson-comment-row {
   align-items: stretch;
-  flex-direction: column;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
   margin-top: 0;
 }
 
 .lesson-viewer-comments .comment-input-stack,
 .lesson-viewer-comments .comment-input-wrap,
 .lesson-viewer-comments .lesson-video-comment,
-.lesson-viewer-comments .post-comment-btn {
+.lesson-viewer-comments .post-comment-btn,
+.lesson-viewer-comments .lesson-comment-row > * {
   max-width: 100%;
   width: 100%;
 }
 
 .lesson-viewer-comments .post-comment-btn {
   align-self: stretch;
+  display: inline-flex;
   justify-content: center;
   min-width: 0;
 }
