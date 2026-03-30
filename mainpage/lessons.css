@@ -271,11 +271,11 @@
 
 .lesson-viewer-player-wrap #video-player-slot {
   height: 100%;
-  min-height: 420px;
+  min-height: clamp(460px, 44vw, 680px);
 }
 
 .lesson-viewer-player-wrap .video-player {
-  min-height: 420px;
+  min-height: clamp(460px, 44vw, 680px);
 }
 
 .lesson-viewer-comments .comment-list {
@@ -289,7 +289,23 @@
 }
 
 .lesson-viewer-comments .comment-row {
+  align-items: stretch;
+  flex-direction: column;
   margin-top: 0;
+}
+
+.lesson-viewer-comments .comment-input-stack,
+.lesson-viewer-comments .comment-input-wrap,
+.lesson-viewer-comments .lesson-video-comment,
+.lesson-viewer-comments .post-comment-btn {
+  max-width: 100%;
+  width: 100%;
+}
+
+.lesson-viewer-comments .post-comment-btn {
+  align-self: stretch;
+  justify-content: center;
+  min-width: 0;
 }
 
 .lesson-viewer-close {
@@ -395,11 +411,11 @@
   }
 
   .lesson-viewer-player-wrap #video-player-slot {
-    min-height: 240px;
+    min-height: 300px;
   }
 
   .lesson-viewer-player-wrap .video-player {
-    min-height: 240px;
+    min-height: 300px;
   }
 
   .lesson-viewer-comments {
