@@ -2166,9 +2166,9 @@ a {
   }
 
   .mobile-auth-links .btn-light {
-    background: var(--brand-gradient);
-    border-color: transparent;
-    color: #ffffff;
+    background: #ffffff;
+    border-color: #d4def4;
+    color: #121212;
   }
 
   .comment-input-stack {
