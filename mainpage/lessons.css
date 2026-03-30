@@ -259,7 +259,7 @@
 }
 
 .lesson-viewer-card {
-  --lesson-player-min-height: clamp(420px, 36vw, 580px);
+  --lesson-player-min-height: clamp(340px, 30vw, 460px);
   display: flex;
   flex: 1;
   margin: 0;
