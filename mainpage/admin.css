@@ -763,7 +763,26 @@ td {
   }
 
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats-grid .stat-box:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .stats-grid .stat-box:nth-child(2),
+  .stats-grid .stat-box:nth-child(3) {
+    padding: 8px;
+  }
+
+  .stats-grid .stat-box:nth-child(2) .label,
+  .stats-grid .stat-box:nth-child(3) .label {
+    font-size: 0.78rem;
+  }
+
+  .stats-grid .stat-box:nth-child(2) .value,
+  .stats-grid .stat-box:nth-child(3) .value {
+    font-size: 1.28rem;
   }
 
   .table-wrap {
@@ -837,7 +856,7 @@ td {
 
   .moderation-item {
     display: block;
-    padding: 40px 36px 32px 10px;
+    padding: 40px 36px 50px 10px;
   }
 
   .moderation-item > div:first-of-type {
@@ -848,11 +867,12 @@ td {
 
   .moderation-item .action-row {
     align-items: center;
+    bottom: 8px;
     gap: 6px;
     margin: 0;
     position: absolute;
-    right: 40px;
-    top: 10px;
+    right: 10px;
+    top: auto;
   }
 
   .moderation-item .action-row .btn {
@@ -971,8 +991,23 @@ td {
     padding: 9px;
   }
 
+  .stats-grid .stat-box:nth-child(2),
+  .stats-grid .stat-box:nth-child(3) {
+    padding: 7px;
+  }
+
+  .stats-grid .stat-box:nth-child(2) .label,
+  .stats-grid .stat-box:nth-child(3) .label {
+    font-size: 0.72rem;
+  }
+
+  .stats-grid .stat-box:nth-child(2) .value,
+  .stats-grid .stat-box:nth-child(3) .value {
+    font-size: 1.14rem;
+  }
+
   .moderation-item {
-    padding: 38px 34px 34px 9px;
+    padding: 40px 34px 52px 9px;
   }
 
   .moderation-item .action-row .btn {
