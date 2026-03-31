@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const API_BASE = "/api";
+  const API_BASE = String(window.HNI_API_BASE || "/api").trim() || "/api";
   const CURRENT_USER_KEY = "hni_current_user";
   const REMEMBERED_ACCOUNTS_KEY = "hni_remembered_accounts_v1";
   const MAINPAGE_ROOT_PATH = "/bright/mainpage/mainpage.html";

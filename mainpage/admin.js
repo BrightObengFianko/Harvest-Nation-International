@@ -37,7 +37,7 @@ const defaultWeeklyContent = {
   ],
 };
 
-const API_BASE = "/api";
+const API_BASE = String(window.HNI_API_BASE || "/api").trim() || "/api";
 
 const statUsers = document.querySelector("#stat-users");
 const statAdmins = document.querySelector("#stat-admins");

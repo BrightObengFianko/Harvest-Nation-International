@@ -46,7 +46,7 @@ const MAX_COMMENT_LENGTH = 220;
 const MAX_REPLY_LENGTH = 220;
 const COMMENT_PREVIEW_LIMIT = 2;
 const COMMENTS_TOTAL_LABEL_ID = "comments-total-label";
-const API_BASE = "/api";
+const API_BASE = String(window.HNI_API_BASE || "/api").trim() || "/api";
 let activeApiBase = API_BASE;
 const COMMENT_REACTION_EMOJIS = [
   "\u{1F44D}",

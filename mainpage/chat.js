@@ -33,7 +33,7 @@ const INACTIVE_COMPOSER_PLACEHOLDER = "Select a user on the left to start chatti
 const MOBILE_CHAT_BREAKPOINT = 760;
 const VIEWPORT_HEIGHT_CSS_VAR = "--chat-viewport-height";
 
-const API_BASE = "/api";
+const API_BASE = String(window.HNI_API_BASE || "/api").trim() || "/api";
 
 let activeSessionUser = null;
 let availableUsers = [];

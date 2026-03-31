@@ -16,7 +16,7 @@
     return;
   }
 
-  const API_BASE = "/api";
+  const API_BASE = String(window.HNI_API_BASE || "/api").trim() || "/api";
 
   let activeSessionUser = null;
   let notificationItems = [];
