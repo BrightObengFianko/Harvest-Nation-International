@@ -825,6 +825,40 @@ td {
     justify-content: flex-start;
   }
 
+  .moderation-item {
+    display: block;
+    padding: 10px 40px 46px 10px;
+  }
+
+  .moderation-item > div:first-of-type {
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .moderation-item .action-row {
+    bottom: 8px;
+    gap: 6px;
+    margin: 0;
+    position: absolute;
+    right: 10px;
+  }
+
+  .moderation-item .action-row .btn {
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    max-width: 100%;
+    min-width: 0;
+    padding: 6px 10px;
+    width: auto;
+  }
+
+  .video-item-posted-date {
+    bottom: 11px;
+    left: 10px;
+    right: auto;
+  }
+
   .weekly-quote-item {
     flex-direction: column;
   }
@@ -901,6 +935,15 @@ td {
   .back-btn {
     font-size: 0.86rem;
     text-align: center;
+  }
+
+  .moderation-item {
+    padding-bottom: 50px;
+  }
+
+  .moderation-item .action-row .btn {
+    font-size: 0.66rem;
+    padding: 5px 9px;
   }
 
   tbody tr td {
