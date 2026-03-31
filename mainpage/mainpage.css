@@ -776,13 +776,13 @@ a {
   cursor: pointer;
   display: inline-flex;
   font-family: "Oswald", sans-serif;
-  font-size: 0.78rem;
-  grid-column: 1 / -1;
+  font-size: 0.84rem;
+  grid-column: auto;
   justify-content: center;
-  justify-self: center;
+  justify-self: end;
   letter-spacing: 0.06em;
-  min-width: 0;
-  padding: 7px 16px;
+  min-width: 136px;
+  padding: 9px 24px;
   text-transform: uppercase;
   width: fit-content;
 }
