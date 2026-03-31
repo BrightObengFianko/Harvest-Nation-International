@@ -24,8 +24,8 @@ const CURRENT_USER_KEY = "hni_current_user";
 const ACCOUNT_PROFILE_STORAGE_KEY = "hni_account_profiles_v1";
 const CHAT_NOTIFICATION_SEEN_KEY = "hni_chat_notification_seen_v1";
 const CHAT_READ_STATE_KEY = "hni_chat_read_state_v1";
-const POLL_MESSAGES_MS = 1500;
-const POLL_USERS_MS = 5000;
+const POLL_MESSAGES_MS = 800;
+const POLL_USERS_MS = 1200;
 const SEARCH_SUGGEST_DEBOUNCE_MS = 260;
 const USER_SEARCH_RESULTS_LIMIT = 1000;
 const DEFAULT_COMPOSER_PLACEHOLDER = "Type your message here...";
@@ -1109,18 +1109,20 @@ function startPolling() {
   window.clearInterval(pollingMessagesTimerId);
   window.clearInterval(pollingUsersTimerId);
 
+  void refreshUsers();
+  if (activeChannel.scope !== "none") {
+    void refreshMessages(false);
+  }
+
   pollingMessagesTimerId = window.setInterval(() => {
-    if (document.visibilityState === "hidden" || activeChannel.scope === "none") {
+    if (activeChannel.scope === "none") {
       return;
     }
-    refreshMessages(false);
+    void refreshMessages(false);
   }, POLL_MESSAGES_MS);
 
   pollingUsersTimerId = window.setInterval(() => {
-    if (document.visibilityState === "hidden") {
-      return;
-    }
-    refreshUsers();
+    void refreshUsers();
   }, POLL_USERS_MS);
 }
 
@@ -1276,7 +1278,7 @@ async function handleSendMessage(event) {
   chatMessageInput.value = "";
   chatMessageInput.blur();
   syncChatViewportHeight();
-  await refreshMessages(true);
+  await Promise.all([refreshMessages(true), refreshUsers()]);
 }
 
 function setupChatEvents() {
