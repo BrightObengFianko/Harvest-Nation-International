@@ -715,6 +715,12 @@ td {
     padding: 10px 10px 88px;
   }
 
+  html,
+  body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
   .topbar {
     align-items: flex-start;
     border-radius: 12px;
@@ -733,14 +739,18 @@ td {
   }
 
   .topbar h1 {
-    font-size: 1.2rem;
+    font-size: 1.08rem;
     overflow-wrap: anywhere;
+  }
+
+  .kicker {
+    font-size: 0.72rem;
   }
 
   .card {
     border-radius: 12px;
     max-width: 100%;
-    padding: 12px;
+    padding: 10px;
   }
 
   .card-head {
@@ -791,7 +801,7 @@ td {
     border-bottom: 1px solid #dbe5f5;
     display: grid;
     gap: 8px;
-    grid-template-columns: 92px minmax(0, 1fr);
+    grid-template-columns: 82px minmax(0, 1fr);
     min-height: 34px;
     overflow-wrap: anywhere;
     padding: 8px 4px;
@@ -827,7 +837,7 @@ td {
 
   .moderation-item {
     display: block;
-    padding: 10px 40px 46px 10px;
+    padding: 40px 36px 32px 10px;
   }
 
   .moderation-item > div:first-of-type {
@@ -837,19 +847,21 @@ td {
   }
 
   .moderation-item .action-row {
-    bottom: 8px;
+    align-items: center;
     gap: 6px;
     margin: 0;
     position: absolute;
-    right: 10px;
+    right: 40px;
+    top: 10px;
   }
 
   .moderation-item .action-row .btn {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     letter-spacing: 0.03em;
+    line-height: 1.1;
     max-width: 100%;
     min-width: 0;
-    padding: 6px 10px;
+    padding: 4px 7px;
     width: auto;
   }
 
@@ -868,7 +880,7 @@ td {
   }
 
   .btn {
-    font-size: 0.92rem;
+    font-size: 0.84rem;
   }
 
   .admin-auth-actions,
@@ -878,9 +890,19 @@ td {
     width: 100%;
   }
 
+  .video-form,
+  .weekly-form,
+  .weekly-grid,
+  .user-search,
+  .user-tools,
+  .card,
+  .dashboard {
+    min-width: 0;
+    width: 100%;
+  }
+
   .user-search .btn,
   .video-form .btn,
-  .action-row .btn,
   .weekly-actions .btn,
   .video-pager .btn,
   .admin-auth-actions .btn,
@@ -927,6 +949,10 @@ td {
     padding: 8px 8px 82px;
   }
 
+  .topbar {
+    padding: 10px;
+  }
+
   .brand img {
     height: 40px;
     width: 40px;
@@ -937,21 +963,30 @@ td {
     text-align: center;
   }
 
+  .topbar h1 {
+    font-size: 0.98rem;
+  }
+
+  .card {
+    padding: 9px;
+  }
+
   .moderation-item {
-    padding-bottom: 50px;
+    padding: 38px 34px 34px 9px;
   }
 
   .moderation-item .action-row .btn {
-    font-size: 0.66rem;
-    padding: 5px 9px;
+    font-size: 0.56rem;
+    padding: 4px 6px;
   }
 
   tbody tr td {
-    grid-template-columns: 78px minmax(0, 1fr);
+    grid-template-columns: 70px minmax(0, 1fr);
   }
 
   .user-search input,
-  .video-form input {
+  .video-form input,
+  .video-form select {
     font-size: 0.95rem;
   }
 }
